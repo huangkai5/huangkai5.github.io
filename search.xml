@@ -1,0 +1,785 @@
+<?xml version="1.0" encoding="utf-8"?>
+<search>
+  <entry>
+    <title>Vue-router 路由问题总结</title>
+    <url>/2017/05/20/Vue-router-%E8%B7%AF%E7%94%B1%E7%94%A8%E6%B3%95%E9%97%AE%E9%A2%98%E6%80%BB%E7%BB%93/</url>
+    <content><![CDATA[<h3 id="路由的两种模式-区别"><a href="#路由的两种模式-区别" class="headerlink" title="路由的两种模式(区别)"></a>路由的两种模式(区别)</h3><h5 id="hash模式"><a href="#hash模式" class="headerlink" title="hash模式"></a>hash模式</h5><figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line">http:<span class="comment">//www.xxx.com/#/login</span></span><br></pre></td></tr></table></figure>
+
+<p>这种 #。后面 hash 值的变化，并不会导致浏览器向服务器发出请求，浏览器不发出请求，也就不会刷新页面。另外每次 hash 值的变化，还会触发hashchange 这个事件，通过这个事件我们就可以知道 hash 值发生了哪些变化。然后我们便可以监听hashchange来实现更新页面部分内容的操作：</p>
+<figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">matchAndUpdate</span> (<span class="params"></span>) </span>&#123;</span><br><span class="line">  <span class="comment">// todo 匹配 hash 做 dom 更新操作</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="built_in">window</span>.addEventListener(<span class="string">'hashchange'</span>, matchAndUpdate)</span><br></pre></td></tr></table></figure>
+
+<h5 id="history模式"><a href="#history模式" class="headerlink" title="history模式"></a>history模式</h5><p>HTML5标准发布。多了两个 API，pushState 和 replaceState，通过这两个 API 可以改变 url 地址且不会发送请求。同时还有popstate事件。通过这些就能用另一种方式来实现前端路由了，但原理都是跟 hash 实现相同的。用了HTML5的实现，单页路由的url就不会多出一个#，变得更加美观。但因为没有 # 号，所以当用户刷新页面之类的操作时，浏览器还是会给服务器发送请求。为了避免出现这种情况，所以这个实现需要服务器的支持，需要把所有路由都重定向到根页面。</p>
+<figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">matchAndUpdate</span> (<span class="params"></span>) </span>&#123;</span><br><span class="line">  <span class="comment">// todo 匹配路径 做 dom 更新操作</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="built_in">window</span>.addEventListener(<span class="string">'popstate'</span>, matchAndUpdate)</span><br></pre></td></tr></table></figure>
+
+<h3 id="嵌套路由"><a href="#嵌套路由" class="headerlink" title="嵌套路由"></a>嵌套路由</h3><figure class="highlight html"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">div</span> <span class="attr">id</span>=<span class="string">"app"</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">router-view</span>&gt;</span><span class="tag">&lt;/<span class="name">router-view</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">div</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">const</span> User = &#123;</span><br><span class="line">  template: <span class="string">'&lt;div&gt;User &#123;&#123; $route.params.id &#125;&#125;&lt;/div&gt;'</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> router = <span class="keyword">new</span> VueRouter(&#123;</span><br><span class="line">  routes: [</span><br><span class="line">    &#123; <span class="attr">path</span>: <span class="string">'/user/:id'</span>, <span class="attr">component</span>: User &#125;</span><br><span class="line">  ]</span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
+
+<h3 id="路由跳转"><a href="#路由跳转" class="headerlink" title="路由跳转"></a>路由跳转</h3><h5 id="声明式"><a href="#声明式" class="headerlink" title="声明式"></a>声明式</h5><figure class="highlight html"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">router-link</span> <span class="attr">:to</span>=<span class="string">"..."</span>&gt;</span><span class="tag">&lt;/<span class="name">router-link</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<h5 id="编程式-this-router-push"><a href="#编程式-this-router-push" class="headerlink" title="编程式(this.$router.push)"></a>编程式(this.$router.push)</h5><figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="comment">//参数可以是一个字符串路径，或者一个描述地址的对象:</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 字符串</span></span><br><span class="line">router.push(<span class="string">'home'</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment">// 对象</span></span><br><span class="line">router.push(&#123; <span class="attr">path</span>: <span class="string">'home'</span> &#125;)</span><br><span class="line"></span><br><span class="line"><span class="comment">// 命名的路由</span></span><br><span class="line">router.push(&#123; <span class="attr">name</span>: <span class="string">'user'</span>, <span class="attr">params</span>: &#123; <span class="attr">userId</span>: <span class="number">123</span> &#125;&#125;)</span><br><span class="line"></span><br><span class="line"><span class="comment">// 带查询参数，变成 /register?plan=private</span></span><br><span class="line">router.push(&#123; <span class="attr">path</span>: <span class="string">'register'</span>, <span class="attr">query</span>: &#123; <span class="attr">plan</span>: <span class="string">'private'</span> &#125;&#125;)</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> userId = <span class="string">'123'</span></span><br><span class="line">router.push(&#123; <span class="attr">name</span>: <span class="string">'user'</span>, <span class="attr">params</span>: &#123; userId &#125;&#125;) <span class="comment">// -&gt; /user/123</span></span><br><span class="line">router.push(&#123; <span class="attr">path</span>: <span class="string">`/user/<span class="subst">$&#123;userId&#125;</span>`</span> &#125;) <span class="comment">// -&gt; /user/123</span></span><br><span class="line"><span class="comment">// 这里的 params 不生效</span></span><br><span class="line">router.push(&#123; <span class="attr">path</span>: <span class="string">'/user'</span>, <span class="attr">params</span>: &#123; userId &#125;&#125;) <span class="comment">// -&gt; /user</span></span><br><span class="line"></span><br><span class="line"><span class="comment">//router.go(n)这个方法的参数是一个整数，意思是在 history 记录中向前或者后退多少步，类似 window.history.go(n)</span></span><br><span class="line"><span class="comment">// 在浏览器记录中前进一步，等同于 history.forward()</span></span><br><span class="line">router.go(<span class="number">1</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment">// 后退一步记录，等同于 history.back()</span></span><br><span class="line">router.go(<span class="number">-1</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment">// 前进 3 步记录</span></span><br><span class="line">router.go(<span class="number">3</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment">// 如果 history 记录不够用，那就默默地失败呗</span></span><br><span class="line">router.go(<span class="number">-100</span>)</span><br><span class="line">router.go(<span class="number">100</span>)</span><br></pre></td></tr></table></figure>
+
+<h3 id="路由守卫"><a href="#路由守卫" class="headerlink" title="路由守卫"></a>路由守卫</h3><figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">import</span> Router <span class="keyword">from</span> <span class="string">'vue-router'</span></span><br><span class="line"></span><br><span class="line">router.beforeEach(<span class="function">(<span class="params">to, <span class="keyword">from</span>, next</span>) =&gt;</span> &#123;</span><br><span class="line">  <span class="keyword">let</span> home = to.query.home || <span class="string">''</span>;</span><br><span class="line">  <span class="keyword">if</span> (to.name === <span class="string">'home'</span>) &#123; <span class="comment">//如果是home来的</span></span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">  &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line">    next() <span class="comment">// 进行跳转</span></span><br><span class="line">  &#125;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+
+<h5 id="全局守卫"><a href="#全局守卫" class="headerlink" title="全局守卫"></a>全局守卫</h5><figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="comment">// 当一个导航触发时，全局前置守卫按照创建顺序调用。守卫是异步解析执行，此时导航在所有守卫 resolve 完之前一直处于 等待中。</span></span><br><span class="line">router.beforeEach(<span class="function">(<span class="params">to, <span class="keyword">from</span>, next</span>) =&gt;</span> &#123;</span><br><span class="line">  <span class="comment">// ...</span></span><br><span class="line">  <span class="comment">// to: Route: 即将要进入的目标 路由对象</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">// from: Route: 当前导航正要离开的路由</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">// next: Function: 一定要调用该方法来 resolve 这个钩子。执行效果依赖 next 方法的调用参数。</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">// next(): 进行管道中的下一个钩子。如果全部钩子执行完了，则导航的状态就是 confirmed (确认的)。</span></span><br><span class="line">&#125;)</span><br><span class="line"></span><br><span class="line"><span class="comment">// 全局后置钩子，然而和守卫不同的是，这些钩子不会接受 next 函数也不会改变导航本身：</span></span><br><span class="line">router.afterEach(<span class="function">(<span class="params">to, <span class="keyword">from</span></span>) =&gt;</span> &#123;</span><br><span class="line">  <span class="comment">// ...</span></span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
+
+<h5 id="组件守卫"><a href="#组件守卫" class="headerlink" title="组件守卫"></a>组件守卫</h5><figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">const</span> Foo = &#123;</span><br><span class="line">  template: <span class="string">`...`</span>,</span><br><span class="line">  beforeRouteEnter (to, <span class="keyword">from</span>, next) &#123;</span><br><span class="line">    <span class="comment">// 在渲染该组件的对应路由被 confirm 前调用</span></span><br><span class="line">    <span class="comment">// 不！能！获取组件实例 `this`</span></span><br><span class="line">    <span class="comment">// 因为当守卫执行前，组件实例还没被创建</span></span><br><span class="line">  &#125;,</span><br><span class="line">  beforeRouteUpdate (to, <span class="keyword">from</span>, next) &#123;</span><br><span class="line">    <span class="comment">// 在当前路由改变，但是该组件被复用时调用</span></span><br><span class="line">    <span class="comment">// 举例来说，对于一个带有动态参数的路径 /foo/:id，在 /foo/1 和 /foo/2 之间跳转的时候，</span></span><br><span class="line">    <span class="comment">// 由于会渲染同样的 Foo 组件，因此组件实例会被复用。而这个钩子就会在这个情况下被调用。</span></span><br><span class="line">    <span class="comment">// 可以访问组件实例 `this`</span></span><br><span class="line">  &#125;,</span><br><span class="line">  beforeRouteLeave (to, <span class="keyword">from</span>, next) &#123;</span><br><span class="line">    <span class="comment">// 导航离开该组件的对应路由时调用</span></span><br><span class="line">    <span class="comment">// 可以访问组件实例 `this`</span></span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="路由懒加载"><a href="#路由懒加载" class="headerlink" title="路由懒加载"></a>路由懒加载</h3><p>结合 Vue 的异步组件和 Webpack 的代码分割功能，轻松实现路由组件的懒加载</p>
+<p>首先，可以将异步组件定义为返回一个 Promise 的工厂函数 (该函数返回的 Promise 应该 resolve 组件本身)：</p>
+<figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">const</span> Foo = <span class="function"><span class="params">()</span> =&gt;</span> <span class="built_in">Promise</span>.resolve(&#123; <span class="comment">/* 组件定义对象 */</span> &#125;)</span><br></pre></td></tr></table></figure>
+
+<p>第二，在 Webpack 2 中，我们可以使用动态 import语法来定义代码分块点 (split point)：</p>
+<figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">import</span>(<span class="string">'./Foo.vue'</span>) <span class="comment">// 返回 Promise</span></span><br></pre></td></tr></table></figure>
+
+<p>结合这两者，这就是如何定义一个能够被 Webpack 自动代码分割的异步组件。</p>
+<figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">const</span> Foo = <span class="function"><span class="params">()</span> =&gt;</span> <span class="keyword">import</span>(<span class="string">'./Foo.vue'</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> router = <span class="keyword">new</span> VueRouter(&#123;</span><br><span class="line">  routes: [</span><br><span class="line">    &#123; <span class="attr">path</span>: <span class="string">'/foo'</span>, <span class="attr">component</span>: Foo &#125;</span><br><span class="line">  ]</span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>]]></content>
+      <categories>
+        <category>html5</category>
+      </categories>
+      <tags>
+        <tag>vue</tag>
+        <tag>js</tag>
+        <tag>router</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Vue中使用Vconsole之移动端调式神器</title>
+    <url>/2017/05/19/Vue%E4%B8%AD%E4%BD%BF%E7%94%A8Vconsole%E4%B9%8B%E7%A7%BB%E5%8A%A8%E7%AB%AF%E8%B0%83%E5%BC%8F%E7%A5%9E%E5%99%A8/</url>
+    <content><![CDATA[<p>在开发vue移动端项目中，大多需要再手机上测，此时我们需要借助Vconsole这个调式插件.<br>效果如下:<br><img src="/2017/05/19/Vue%E4%B8%AD%E4%BD%BF%E7%94%A8Vconsole%E4%B9%8B%E7%A7%BB%E5%8A%A8%E7%AB%AF%E8%B0%83%E5%BC%8F%E7%A5%9E%E5%99%A8/vconsole.jpeg" alt></p>
+<h5 id="npm方式安装"><a href="#npm方式安装" class="headerlink" title="npm方式安装"></a>npm方式安装</h5><p>第一步 局部install</p>
+<figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line">npm install vconsole --save</span><br></pre></td></tr></table></figure>
+
+<p>第二步 在main.js中</p>
+<figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">import</span> VConsole <span class="keyword">from</span> <span class="string">'vconsole'</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 判断开发环境还是生产环境</span></span><br><span class="line"><span class="keyword">if</span> (process.env.NODE_ENV !== <span class="string">'production'</span>) &#123;</span><br><span class="line">  <span class="keyword">const</span> vConsole = <span class="keyword">new</span> VConsole()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h5 id="原生js文件引入"><a href="#原生js文件引入" class="headerlink" title="原生js文件引入"></a>原生js文件引入</h5><p>第一步 我们创建一个util.js 用于暴露各种公用方法<br>(当让我们也可以去封装更多的方法)</p>
+<figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">const</span> util = &#123;</span><br><span class="line">  <span class="comment">// src： 文件路径地址</span></span><br><span class="line">  loadScript: <span class="function"><span class="keyword">function</span> (<span class="params">src</span>) </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> <span class="built_in">Promise</span>(<span class="function"><span class="keyword">function</span>(<span class="params">resolve, reject</span>) </span>&#123;</span><br><span class="line">      <span class="keyword">if</span> (<span class="built_in">document</span>.querySelector(<span class="string">'script[src="'</span> + src + <span class="string">'"]'</span>)) &#123;</span><br><span class="line">        resolve();</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">      &#125;</span><br><span class="line"></span><br><span class="line">      <span class="keyword">const</span> el = <span class="built_in">document</span>.createElement(<span class="string">'script'</span>);</span><br><span class="line"></span><br><span class="line">      el.type = <span class="string">'text/javascript'</span>;</span><br><span class="line">      el.async = <span class="literal">true</span>;</span><br><span class="line">      el.src = src;</span><br><span class="line"></span><br><span class="line">      el.addEventListener(<span class="string">'load'</span>, resolve);</span><br><span class="line">      el.addEventListener(<span class="string">'error'</span>, reject);</span><br><span class="line">      el.addEventListener(<span class="string">'abort'</span>, reject);</span><br><span class="line"></span><br><span class="line">      <span class="built_in">document</span>.head.appendChild(el);</span><br><span class="line">    &#125;)</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="comment">// ...</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">export</span> <span class="keyword">default</span> util</span><br></pre></td></tr></table></figure>
+
+<p>第二歩 在main.js中</p>
+<figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">import</span> util <span class="keyword">from</span> <span class="string">'xxx/util'</span> </span><br><span class="line"></span><br><span class="line"><span class="comment">// 判断开发环境还是生产环境</span></span><br><span class="line"><span class="keyword">if</span> (process.env.NODE_ENV !== <span class="string">'production'</span>) &#123;</span><br><span class="line">  util.loadScript(<span class="string">'vconsole.js的路径'</span>).then(<span class="function"><span class="params">()</span> =&gt;</span> &#123;</span><br><span class="line">    <span class="keyword">new</span> <span class="built_in">window</span>.VConsole();</span><br><span class="line">  &#125;)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>]]></content>
+      <categories>
+        <category>html5</category>
+      </categories>
+      <tags>
+        <tag>vue</tag>
+        <tag>js</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>async和await的用法以及promise的区别</title>
+    <url>/2017/08/10/async%E5%92%8Cawait%E7%9A%84%E7%94%A8%E6%B3%95%E4%BB%A5%E5%8F%8Apromise%E7%9A%84%E5%8C%BA%E5%88%AB/</url>
+    <content><![CDATA[<h3 id="什么是Async-Await"><a href="#什么是Async-Await" class="headerlink" title="什么是Async/Await"></a>什么是Async/Await</h3><p>  async/await是写异步代码的新方式(es7)，以前的方法有回调函数和Promise。<br>  async/await是基于Promise实现的，它不能用于普通的回调函数。<br>  async/await与Promise一样，是非阻塞的。<br>  async/await使得异步代码看起来像同步代码，这正是它的魔力所在。</p>
+<h3 id="Async-Await语法"><a href="#Async-Await语法" class="headerlink" title="Async/Await语法"></a>Async/Await语法</h3><p>  假设函数getJSON返回值是 Promise，并且 Promise resolves 有一些JSON 对象。我们只想调用它并且记录该JSON并且返回完成。</p>
+<p>　1.使用Promise：</p>
+  <figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">const</span> makeRequest = <span class="function"><span class="params">()</span> =&gt;</span></span><br><span class="line">    getJSON().then(<span class="function"><span class="params">data</span> =&gt;</span> &#123;</span><br><span class="line">        <span class="built_in">console</span>.log(data)</span><br><span class="line">        <span class="keyword">return</span> <span class="string">"done"</span></span><br><span class="line">    &#125;)</span><br><span class="line"></span><br><span class="line">makeRequest()</span><br></pre></td></tr></table></figure>
+
+<p>  2.使用Async：</p>
+  <figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">const</span> makeRequest = <span class="keyword">async</span> () =&gt; &#123;</span><br><span class="line">     <span class="comment">// await getJSON()表示console.log会等到getJSON的promise成功reosolve之后再执行。</span></span><br><span class="line">     <span class="built_in">console</span>.log(<span class="keyword">await</span> getJSON)</span><br><span class="line">     <span class="keyword">return</span> <span class="string">"done"</span></span><br><span class="line"> &#125;</span><br><span class="line"></span><br><span class="line"> makeRequest()</span><br></pre></td></tr></table></figure>
+
+<h3 id="区别"><a href="#区别" class="headerlink" title="区别"></a>区别</h3><p>  函数前面多了一个aync关键字。await关键字只能用在aync定义的函数内。async函数会隐式地返回一个promise，该promise的reosolve值就是函数return的值。(示例中reosolve值就是字符串”done”)</p>
+<h3 id="为什么Async-Await更好"><a href="#为什么Async-Await更好" class="headerlink" title="为什么Async/Await更好"></a>为什么Async/Await更好</h3><p>1.使用async函数可以让代码简洁很多，不需要像Promise一样需要些then，不需要写匿名函数处理Promise的resolve值，也不需要定义多余的data变量，还避免了嵌套代码。</p>
+<p>2.错误处理：<br>　Async/Await 让 try/catch 可以同时处理同步和异步错误。在下面的promise示例中，try/catch 不能处理 JSON.parse 的错误，因为它在Promise中。我们需要使用 .catch，这样错误处理代码非常冗余。并且，在我们的实际生产代码会更加复杂。</p>
+  <figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">const</span> makeRequest = <span class="function"><span class="params">()</span> =&gt;</span> &#123;</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        getJSON().then(<span class="function"><span class="params">result</span> =&gt;</span> &#123;</span><br><span class="line">            <span class="comment">// JSON.parse可能会出错</span></span><br><span class="line">            <span class="keyword">const</span> data = <span class="built_in">JSON</span>.parse(result)</span><br><span class="line">            <span class="built_in">console</span>.log(data)</span><br><span class="line">        &#125;)</span><br><span class="line">        <span class="comment">// 取消注释，处理异步代码的错误</span></span><br><span class="line">        <span class="comment">// .catch((err) =&gt; &#123;</span></span><br><span class="line">        <span class="comment">//   console.log(err)</span></span><br><span class="line">        <span class="comment">// &#125;)</span></span><br><span class="line">    &#125; <span class="keyword">catch</span> (err) &#123;</span><br><span class="line">        <span class="built_in">console</span>.log(err)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>  使用aync/await的话，catch能处理JSON.parse错误:</p>
+  <figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"> <span class="keyword">const</span> makeRequest = <span class="keyword">async</span> () =&gt; &#123;</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        <span class="comment">// this parse may fail</span></span><br><span class="line">        <span class="keyword">const</span> data = <span class="built_in">JSON</span>.parse(<span class="keyword">await</span> getJSON())</span><br><span class="line">        <span class="built_in">console</span>.log(data)</span><br><span class="line">    &#125; <span class="keyword">catch</span> (err) &#123;</span><br><span class="line">        <span class="built_in">console</span>.log(err)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>3.条件语句<br>　　条件语句也和错误捕获是一样的，在 Async 中也可以像平时一般使用条件语句</p>
+<p>4.中间值<br>　　你很可能遇到过这样的场景，调用promise1，使用promise1返回的结果去调用promise2，然后使用两者的结果 去调用promise3。</p>
+  <figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">const</span> makeRequest = <span class="function"><span class="params">()</span> =&gt;</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> promise1().then(<span class="function"><span class="params">value1</span> =&gt;</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> promise2(value1).then(<span class="function"><span class="params">value2</span> =&gt;</span> &#123;</span><br><span class="line">            <span class="keyword">return</span> promise3(value1, value2)</span><br><span class="line">        &#125;)</span><br><span class="line">    &#125;)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 如果 promise3 不需要 value1，嵌套将会变得简单。如果你忍受不了嵌套，你可以将value 1 &amp; 2 放进Promise.all来避免深层嵌套，但是这种方法为了可读性牺牲了语义。除了避免嵌套，并没有其他理由将value1和value2放在一个数组中</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> makeRequest = <span class="function"><span class="params">()</span> =&gt;</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> promise1().then(<span class="function"><span class="params">value1</span> =&gt;</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="built_in">Promise</span>.all([value1, promise2(value1)])</span><br><span class="line">    &#125;).then(<span class="function">(<span class="params">[value1, value2]</span>) =&gt;</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> promise3(value1, value2)</span><br><span class="line">    &#125;)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>  使用async/await的话，代码会变得异常简单和直观。</p>
+  <figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">const</span> makeRequest = <span class="keyword">async</span> () =&gt; &#123;</span><br><span class="line">    <span class="keyword">const</span> value1 = <span class="keyword">await</span> promise1()</span><br><span class="line">    <span class="keyword">const</span> value2 = <span class="keyword">await</span> promise2(value1)</span><br><span class="line">    <span class="keyword">return</span> promise3(value1, value2)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>5.错误栈</p>
+<p>  如果 Promise 连续调用，对于错误的处理是很麻烦的。你无法知道错误出在哪里。</p>
+  <figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">const</span> makeRequest = <span class="function"><span class="params">()</span> =&gt;</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> callAPromise()</span><br><span class="line">        .then(<span class="function"><span class="params">()</span> =&gt;</span> callAPromise())</span><br><span class="line">        .then(<span class="function"><span class="params">()</span> =&gt;</span> callAPromise())</span><br><span class="line">        .then(<span class="function"><span class="params">()</span> =&gt;</span> callAPromise())</span><br><span class="line">        .then(<span class="function"><span class="params">()</span> =&gt;</span> callAPromise())</span><br><span class="line">        .then(<span class="function"><span class="params">()</span> =&gt;</span> &#123;</span><br><span class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> <span class="built_in">Error</span>(<span class="string">"oops"</span>);</span><br><span class="line">        &#125;)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">makeRequest().catch(<span class="function"><span class="params">err</span> =&gt;</span> &#123;</span><br><span class="line">    <span class="built_in">console</span>.log(err);</span><br><span class="line">    <span class="comment">// output</span></span><br><span class="line">    <span class="comment">// Error: oops at callAPromise.then.then.then.then.then (index.js:8:13)</span></span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
+
+<p>  async/await中的错误栈会指向错误所在的函数。在开发环境中，这一点优势并不大。但是，当你分析生产环境的错误日志时，它将非常有用。这时，知道错误发生在makeRequest比知道错误发生在then链中要好。</p>
+  <figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">const</span> makeRequest = <span class="keyword">async</span> () =&gt; &#123;</span><br><span class="line">    <span class="keyword">await</span> callAPromise()</span><br><span class="line">    <span class="keyword">await</span> callAPromise()</span><br><span class="line">    <span class="keyword">await</span> callAPromise()</span><br><span class="line">    <span class="keyword">await</span> callAPromise()</span><br><span class="line">    <span class="keyword">await</span> callAPromise()</span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> <span class="built_in">Error</span>(<span class="string">"oops"</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">makeRequest().catch(<span class="function"><span class="params">err</span> =&gt;</span> &#123;</span><br><span class="line">    <span class="built_in">console</span>.log(err);</span><br><span class="line">    <span class="comment">// output</span></span><br><span class="line">    <span class="comment">// Error: oops at makeRequest (index.js:7:9)</span></span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
+
+<p>6.调试<br>　 async/await能够使得代码调试更简单。2个理由使得调试Promise变得非常痛苦:</p>
+<p>　　　《1》不能在返回表达式的箭头函数中设置断点<br>　　　《2》如果你在.then代码块中设置断点，使用Step Over快捷键，调试器不会跳到下一个.then，因为它只会跳过异步代码。</p>
+<p>　　使用await/async时，你不再需要那么多箭头函数，这样你就可以像调试同步代码一样跳过await语句。</p>
+]]></content>
+      <categories>
+        <category>html5</category>
+      </categories>
+      <tags>
+        <tag>js</tag>
+        <tag>async</tag>
+        <tag>await</tag>
+        <tag>promise</tag>
+        <tag>异步</tag>
+        <tag>es7</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>es6中class实现拖拽封装</title>
+    <url>/2020/04/02/es6%E4%B8%ADclass%E5%AE%9E%E7%8E%B0%E6%8B%96%E6%8B%BD%E5%B0%81%E8%A3%85/</url>
+    <content><![CDATA[<p>今天我们来实现一个class封装的拖拽demo，并且以继承的方式。实现拖拽:</p>
+<p><img src="/2020/04/02/es6%E4%B8%ADclass%E5%AE%9E%E7%8E%B0%E6%8B%96%E6%8B%BD%E5%B0%81%E8%A3%85/drag.jpeg" alt></p>
+<p>下面我们来写代码:</p>
+<p>css如下</p>
+<figure class="highlight css"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="selector-tag">div</span> &#123;</span><br><span class="line">  <span class="attribute">width</span>: <span class="number">100px</span>;</span><br><span class="line">  <span class="attribute">height</span>: <span class="number">100px</span>;</span><br><span class="line">  <span class="attribute">position</span>: absolute;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="selector-id">#box1</span> &#123;</span><br><span class="line">  <span class="attribute">left</span>: <span class="number">0</span>;</span><br><span class="line">  <span class="attribute">background</span>: red;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="selector-id">#box2</span> &#123;</span><br><span class="line">  <span class="attribute">right</span>: <span class="number">0</span>;</span><br><span class="line">  <span class="attribute">background</span>: green;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>html如下</p>
+<figure class="highlight html"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">div</span> <span class="attr">id</span>=<span class="string">"box1"</span>&gt;</span>box1<span class="tag">&lt;/<span class="name">div</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">div</span> <span class="attr">id</span>=<span class="string">"box2"</span>&gt;</span>box2<span class="tag">&lt;/<span class="name">div</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>接下来是js</p>
+<figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">// 父类</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Drag</span> </span>&#123;</span><br><span class="line">  <span class="comment">// 每次进入页面时都会执行此方法</span></span><br><span class="line">  <span class="keyword">constructor</span>(dom) &#123;</span><br><span class="line">    <span class="keyword">this</span>.box = <span class="built_in">document</span>.querySelector(dom);</span><br><span class="line">    <span class="keyword">this</span>.x = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">this</span>.y = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">this</span>.init()</span><br><span class="line">  &#125;</span><br><span class="line">  init() &#123;</span><br><span class="line">    <span class="comment">// console.log(this.box)</span></span><br><span class="line">    <span class="keyword">this</span>.box.onmousedown = <span class="function"><span class="keyword">function</span> (<span class="params">e</span>) </span>&#123;</span><br><span class="line">      <span class="built_in">console</span>.log(<span class="keyword">this</span>.box)</span><br><span class="line">      <span class="keyword">this</span>.x = e.clientX - <span class="keyword">this</span>.box.offsetLeft;</span><br><span class="line">      <span class="keyword">this</span>.y = e.clientY - <span class="keyword">this</span>.box.offsetTop;</span><br><span class="line">      <span class="comment">// 移动事件</span></span><br><span class="line">      <span class="keyword">this</span>.box.onmousemove = <span class="keyword">this</span>.fnMove.bind(<span class="keyword">this</span>)</span><br><span class="line">      <span class="keyword">this</span>.box.onmouseup = <span class="keyword">this</span>.fnUp.bind(<span class="keyword">this</span>)</span><br><span class="line">    &#125;.bind(<span class="keyword">this</span>)</span><br><span class="line">  &#125;</span><br><span class="line">  fnMove(e) &#123;</span><br><span class="line">    <span class="keyword">this</span>.box.style.left = e.clientX - <span class="keyword">this</span>.x + <span class="string">'px'</span></span><br><span class="line">    <span class="keyword">this</span>.box.style.top = e.clientY - <span class="keyword">this</span>.y + <span class="string">'px'</span></span><br><span class="line">  &#125;</span><br><span class="line">  fnUp() &#123;</span><br><span class="line">      <span class="keyword">this</span>.box.onmousemove = <span class="literal">null</span>;</span><br><span class="line">      <span class="keyword">this</span>.box.onmouseout = <span class="literal">null</span>;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 子类 并限制左侧移动范围</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">limitDrag</span> <span class="keyword">extends</span> <span class="title">Drag</span> </span>&#123;</span><br><span class="line">  fnMove(e) &#123;</span><br><span class="line">    <span class="comment">// 继承Drag的fnMove方法</span></span><br><span class="line">    <span class="keyword">super</span>.fnMove(e);</span><br><span class="line">    <span class="comment">// 给limitDrag单独增加方法</span></span><br><span class="line">    <span class="keyword">if</span>(<span class="keyword">this</span>.box.offsetLeft &lt;= <span class="number">0</span>) &#123;</span><br><span class="line">      <span class="keyword">this</span>.box.style.left = <span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 调用传id</span></span><br><span class="line"><span class="keyword">new</span> Drag(<span class="string">'#box1'</span>);</span><br><span class="line"></span><br><span class="line"><span class="keyword">new</span> limitDrag(<span class="string">'#box2'</span>);</span><br></pre></td></tr></table></figure>
+
+<h5 id="ok，截止到目前，你的class拖拽方法就已经完成，接下来你就可以去本地试试咯"><a href="#ok，截止到目前，你的class拖拽方法就已经完成，接下来你就可以去本地试试咯" class="headerlink" title="ok，截止到目前，你的class拖拽方法就已经完成，接下来你就可以去本地试试咯~"></a>ok，截止到目前，你的class拖拽方法就已经完成，接下来你就可以去本地试试咯~</h5>]]></content>
+      <categories>
+        <category>html5</category>
+      </categories>
+      <tags>
+        <tag>js</tag>
+        <tag>es6</tag>
+        <tag>class</tag>
+        <tag>拖拽</tag>
+        <tag>’继承‘</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>es6转化为数组Array</title>
+    <url>/2018/04/21/es6%E8%BD%AC%E5%8C%96%E4%B8%BA%E6%95%B0%E7%BB%84/</url>
+    <content><![CDATA[<h3 id="Array-from"><a href="#Array-from" class="headerlink" title="Array.from()"></a>Array.from()</h3><p>  Array.from方法用于将两类对象转为真正的数组：类似数组的对象（array-like object）和可遍历（iterable）的对象（包括 ES6 新增的数据结构 Set 和 Map）。</p>
+<p>  下面是一个类似数组的对象，Array.from将它转为真正的数组。</p>
+  <figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">let</span> arrayLike = &#123;</span><br><span class="line">  <span class="string">'0'</span>: <span class="string">'a'</span>,</span><br><span class="line">  <span class="string">'1'</span>: <span class="string">'b'</span>,</span><br><span class="line">  <span class="string">'2'</span>: <span class="string">'c'</span>,</span><br><span class="line">  length: <span class="number">3</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// ES5的写法</span></span><br><span class="line"><span class="keyword">var</span> arr1 = [].slice.call(arrayLike); <span class="comment">// ['a', 'b', 'c']</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// ES6的写法</span></span><br><span class="line"><span class="keyword">let</span> arr2 = <span class="built_in">Array</span>.from(arrayLike); <span class="comment">// ['a', 'b', 'c']</span></span><br></pre></td></tr></table></figure>
+
+<p>  实际应用中，常见的类似数组的对象是 DOM 操作返回的 NodeList 集合，以及函数内部的arguments对象。Array.from都可以将它们转为真正的数组。</p>
+  <figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="comment">// NodeList对象</span></span><br><span class="line"><span class="keyword">let</span> ps = <span class="built_in">document</span>.querySelectorAll(<span class="string">'p'</span>);</span><br><span class="line"><span class="built_in">Array</span>.from(ps).filter(<span class="function"><span class="params">p</span> =&gt;</span> &#123;</span><br><span class="line">  <span class="keyword">return</span> p.textContent.length &gt; <span class="number">100</span>;</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line"><span class="comment">// arguments对象</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">foo</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">  <span class="keyword">var</span> args = <span class="built_in">Array</span>.from(<span class="built_in">arguments</span>);</span><br><span class="line">  <span class="comment">// ...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<p>  上面代码中，querySelectorAll方法返回的是一个类似数组的对象，可以将这个对象转为真正的数组，再使用filter方法。</p>
+<p>  只要是部署了 Iterator 接口的数据结构，Array.from都能将其转为数组。</p>
+<p>  <strong>值得提醒的是，扩展运算符（…）也可以将某些数据结构转为数组。</strong></p>
+  <figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="comment">// arguments对象</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">foo</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">  <span class="keyword">const</span> args = [...arguments];</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// NodeList对象</span></span><br><span class="line">[...document.querySelectorAll(<span class="string">'div'</span>)]</span><br></pre></td></tr></table></figure>
+
+<p>  扩展运算符背后调用的是遍历器接口（Symbol.iterator），如果一个对象没有部署这个接口，就无法转换。Array.from方法还支持类似数组的对象。所谓类似数组的对象，本质特征只有一点，即必须有length属性。因此，任何有length属性的对象，都可以通过Array.from方法转为数组，而此时扩展运算符就无法转换。</p>
+<p>  Array.from还可以接受第二个参数，作用类似于数组的map方法，用来对每个元素进行处理，将处理后的值放入返回的数组。</p>
+<p>  如果map函数里面用到了this关键字，还可以传入Array.from的第三个参数，用来绑定this。</p>
+<p>  Array.from()的另一个应用是，将字符串转为数组，然后返回字符串的长度。因为它能正确处理各种 Unicode 字符，可以避免 JavaScript 将大于\uFFFF的 Unicode 字符，算作两个字符的 bug。</p>
+  <figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">countSymbols</span>(<span class="params">string</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="built_in">Array</span>.from(string).length;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<h3 id="Array-of"><a href="#Array-of" class="headerlink" title="Array.of()"></a>Array.of()</h3><p>  Array.of方法用于将一组值，转换为数组。</p>
+  <figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="built_in">Array</span>.of(<span class="number">3</span>, <span class="number">11</span>, <span class="number">8</span>) <span class="comment">// [3,11,8]</span></span><br><span class="line"><span class="built_in">Array</span>.of(<span class="number">3</span>) <span class="comment">// [3]</span></span><br><span class="line"><span class="built_in">Array</span>.of(<span class="number">3</span>).length <span class="comment">// 1</span></span><br></pre></td></tr></table></figure>
+
+
+<p>  这个方法的主要目的，是弥补数组构造函数Array()的不足。因为参数个数的不同，会导致Array()的行为有差异。</p>
+<p>  Array.of基本上可以用来替代Array()或new Array()，并且不存在由于参数不同而导致的重载。它的行为非常统一。</p>
+  <figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="built_in">Array</span>.of() <span class="comment">// []</span></span><br><span class="line"><span class="built_in">Array</span>.of(<span class="literal">undefined</span>) <span class="comment">// [undefined]</span></span><br><span class="line"><span class="built_in">Array</span>.of(<span class="number">1</span>) <span class="comment">// [1]</span></span><br><span class="line"><span class="built_in">Array</span>.of(<span class="number">1</span>, <span class="number">2</span>) <span class="comment">// [1, 2]</span></span><br></pre></td></tr></table></figure>
+
+<p>  这个方法的主要目的，是弥补数组构造函数Array()的不足。因为参数个数的不同，会导致Array()的行为有差异。</p>
+  <figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="built_in">Array</span>() <span class="comment">// []</span></span><br><span class="line"><span class="built_in">Array</span>(<span class="number">3</span>) <span class="comment">// [, , ,]</span></span><br><span class="line"><span class="built_in">Array</span>(<span class="number">3</span>, <span class="number">11</span>, <span class="number">8</span>) <span class="comment">// [3, 11, 8]</span></span><br></pre></td></tr></table></figure>
+
+<p>  上面代码中，Array方法没有参数、一个参数、三个参数时，返回结果都不一样。只有当参数个数不少于 2 个时，Array()才会返回由参数组成的新数组。参数个数只有一个时，实际上是指定数组的长度。</p>
+<p>  Array.of总是返回参数值组成的数组。如果没有参数，就返回一个空数组。</p>
+<p>  Array.of方法可以用下面的代码模拟实现。</p>
+  <figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">ArrayOf</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">  <span class="keyword">return</span> [].slice.call(<span class="built_in">arguments</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>]]></content>
+      <categories>
+        <category>html5</category>
+      </categories>
+      <tags>
+        <tag>js</tag>
+        <tag>es6</tag>
+        <tag>array</tag>
+        <tag>from</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>js之深浅拷贝</title>
+    <url>/2018/05/15/js%E4%B9%8B%E6%B7%B1%E6%B5%85%E6%8B%B7%E8%B4%9D/</url>
+    <content><![CDATA[<h3 id="js的数据类型"><a href="#js的数据类型" class="headerlink" title="js的数据类型"></a>js的数据类型</h3><p>  Number（数值型）、String（字符串）、Boolean（布尔型）、Object（对象，object和array都属于Object类型）、null、undefined</p>
+<p>  我们日常使用的javascript深浅拷贝主要是面向Object引用类型进行拷贝；</p>
+<h3 id="基本数据类型复制"><a href="#基本数据类型复制" class="headerlink" title="基本数据类型复制"></a>基本数据类型复制</h3>  <figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="comment">// 深拷贝</span></span><br><span class="line"><span class="keyword">var</span> a = <span class="number">1</span>;</span><br><span class="line"><span class="keyword">var</span> b = a;</span><br><span class="line"><span class="built_in">console</span>.log(b) <span class="comment">// 1</span></span><br><span class="line">a = <span class="number">2</span>;</span><br><span class="line"><span class="built_in">console</span>.log(b) <span class="comment">// 1</span></span><br><span class="line"><span class="built_in">console</span>.log(a) <span class="comment">// 2</span></span><br></pre></td></tr></table></figure>
+
+<p>  因为a，b都是属于基本类型，基本类型的复制是不会影响对方的，因为基本类型是每一次创建变量都会在栈内存中开辟一块内存，用来存放值，所以基本类型进行复制是不会对另外一个变量有影响的；</p>
+<h3 id="引用类型复制"><a href="#引用类型复制" class="headerlink" title="引用类型复制"></a>引用类型复制</h3><p>  引用类型的复制我们分为数组的复制和对象的复制两个方面来进行讲解：</p>
+<h4 id="浅拷贝"><a href="#浅拷贝" class="headerlink" title="浅拷贝"></a>浅拷贝</h4>  <figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">var</span> arr1 = [<span class="string">'1'</span>, <span class="string">'2'</span>];</span><br><span class="line"><span class="keyword">var</span> arr2 = arr1;</span><br><span class="line"></span><br><span class="line"><span class="built_in">console</span>.log(arr2); <span class="comment">// ["1", "2"]</span></span><br><span class="line"></span><br><span class="line">arr1.push(<span class="number">3</span>);</span><br><span class="line">arr2.push(<span class="number">4</span>)</span><br><span class="line"><span class="built_in">console</span>.log(arr1); <span class="comment">// ["1", "2", 3, 4]</span></span><br><span class="line"><span class="built_in">console</span>.log(arr2); <span class="comment">// ["1", "2", 3, 4]</span></span><br></pre></td></tr></table></figure>
+
+<p>  上面代码可以看出来，由于arr1和arr2指向的是同一个内存，所以不管是arr1还是arr2修改，任何一个一个改动两个数组都是会互相产生影响的；就是我们常说的引用类型的浅拷贝。</p>
+<h4 id="silce"><a href="#silce" class="headerlink" title="silce"></a>silce</h4>  <figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">var</span> arr1 = [<span class="string">'red'</span>,<span class="string">'green'</span>];</span><br><span class="line"><span class="keyword">var</span> arr2 = arr1.slice(<span class="number">0</span>);<span class="comment">//复制</span></span><br><span class="line"><span class="built_in">console</span>.log(arr2)<span class="comment">//['red','green'];</span></span><br><span class="line">arr1.push(<span class="string">'black'</span>) ;<span class="comment">//改变color1的值</span></span><br><span class="line"><span class="built_in">console</span>.log(arr2)<span class="comment">//["red", "green"]</span></span><br><span class="line"><span class="built_in">console</span>.log(arr1)<span class="comment">//["red", "green", "black"]</span></span><br></pre></td></tr></table></figure>
+
+<p>  js原生的方法slice会返回一个新的数组，上述代码乍一看会以为是深拷贝，因为arr2和arr1相互复制和牵引，而当arr1调用了push方法添加了新数组子项的时候，arr2没有发生变化；<br>  是的，这是符合深拷贝的特性，但是拷贝的不够彻底，所以还不能算是真正意义上的深拷贝，所以slice只能被称为浅拷贝；slice方法只适用于一维数组的拷贝，在二维数组中就会破绽百出；</p>
+  <figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">var</span> arr1=[<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>,[<span class="string">'1'</span>,<span class="string">'2'</span>,<span class="string">'3'</span>]];</span><br><span class="line"><span class="keyword">var</span> arr2=arr1.slice(<span class="number">0</span>);</span><br><span class="line">arr1[<span class="number">3</span>][<span class="number">0</span>]=<span class="number">0</span>;</span><br><span class="line"><span class="built_in">console</span>.log(arr1);<span class="comment">//[1,2,3,['0','2','3']]</span></span><br><span class="line"><span class="built_in">console</span>.log(arr2);<span class="comment">//[1,2,3,['0','2','3']]</span></span><br></pre></td></tr></table></figure>
+
+<p>  所以事实证明slice不是深拷贝；</p>
+<h4 id="concat"><a href="#concat" class="headerlink" title="concat"></a>concat</h4>  <figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">var</span> arr1 = [<span class="string">'red'</span>,<span class="string">'green'</span>];</span><br><span class="line"><span class="keyword">var</span> arr2 = arr1.concat();<span class="comment">//复制</span></span><br><span class="line"><span class="built_in">console</span>.log(arr2)<span class="comment">//['red','green'];</span></span><br><span class="line">arr1.push(<span class="string">'black'</span>) ;<span class="comment">//改变color1的值</span></span><br><span class="line"><span class="built_in">console</span>.log(arr2)<span class="comment">//["red", "green"]</span></span><br><span class="line"><span class="built_in">console</span>.log(arr1)<span class="comment">//["red", "green", "black"]</span></span><br></pre></td></tr></table></figure>
+
+  <figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">var</span> arr1=[<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>,[<span class="string">'1'</span>,<span class="string">'2'</span>,<span class="string">'3'</span>]];</span><br><span class="line"><span class="keyword">var</span> arr2=arr1.concat();</span><br><span class="line">arr1[<span class="number">3</span>][<span class="number">0</span>]=<span class="number">0</span>;</span><br><span class="line"><span class="built_in">console</span>.log(arr1);<span class="comment">//[1,2,3,['0','2','3']]</span></span><br><span class="line"><span class="built_in">console</span>.log(arr2);<span class="comment">//[1,2,3,['0','2','3']]</span></span><br></pre></td></tr></table></figure>
+
+<p> <strong>concat方法在一维数组中是不会影响源数组的数据的，而在二维数组中concat的表现和slice是一样的；</strong></p>
+<h4 id="Object-assign"><a href="#Object-assign" class="headerlink" title="Object.assign()"></a>Object.assign()</h4><p>  <strong>第一级属性深拷贝，从第二级属性开始就是浅拷贝。</strong></p>
+  <figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="comment">//示例1  一层深拷贝</span></span><br><span class="line"><span class="keyword">let</span> obj = &#123;<span class="attr">a</span>:<span class="number">1</span>&#125;</span><br><span class="line"><span class="keyword">let</span> newObj = <span class="built_in">Object</span>.assign(&#123;&#125;,obj);</span><br><span class="line"><span class="built_in">console</span>.log(newObj); <span class="comment">//&#123;a: 1&#125;</span></span><br><span class="line">newObj.a=<span class="number">2</span>;</span><br><span class="line"><span class="built_in">console</span>.log(obj); <span class="comment">//&#123;a:1&#125;</span></span><br><span class="line"><span class="built_in">console</span>.log(newObj); <span class="comment">//&#123;a: 2&#125;</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">//示例2  二层浅拷贝</span></span><br><span class="line"><span class="keyword">let</span> obj = &#123;<span class="attr">a</span>:<span class="number">1</span>,<span class="attr">b</span>:&#123;<span class="attr">name</span>:<span class="string">"zhangsan"</span>&#125;&#125;</span><br><span class="line"><span class="keyword">let</span> newObj = <span class="built_in">Object</span>.assign(&#123;&#125;,obj);</span><br><span class="line"><span class="built_in">console</span>.log(newObj); <span class="comment">//&#123;a:1,b:&#123;name:"zhangsan"&#125;&#125;</span></span><br><span class="line">newObj.b.name=<span class="string">"lisi"</span>;</span><br><span class="line"><span class="built_in">console</span>.log(obj); <span class="comment">//&#123;a:1,b:&#123;name:"lisi"&#125;&#125;</span></span><br></pre></td></tr></table></figure>
+
+
+<h4 id="深拷贝"><a href="#深拷贝" class="headerlink" title="深拷贝"></a>深拷贝</h4><p>  js数组中实现深拷贝的方法都多种，比如JSON.parse(JSON.stringify())和递归以及JQuery库的extend方法（只是extend方法需要依赖JQuery库，所以我们尽量的使用原生的方式来实现）都是可以实现数组和对象的深拷贝的；</p>
+<h5 id="JSON-parse-JSON-stringify"><a href="#JSON-parse-JSON-stringify" class="headerlink" title="JSON.parse(JSON.stringify())"></a>JSON.parse(JSON.stringify())</h5>  <figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">var</span> arr1 = [<span class="string">'red'</span>,<span class="string">'green'</span>];</span><br><span class="line"><span class="keyword">var</span> arr2 = <span class="built_in">JSON</span>.parse(<span class="built_in">JSON</span>.stringify(arr1));<span class="comment">//复制</span></span><br><span class="line"><span class="built_in">console</span>.log(arr2)<span class="comment">//['red','green'];</span></span><br><span class="line">arr1.push(<span class="string">'black'</span>) ;<span class="comment">//改变color1的值</span></span><br><span class="line"><span class="built_in">console</span>.log(arr2)<span class="comment">//["red", "green"]</span></span><br><span class="line"><span class="built_in">console</span>.log(arr1)<span class="comment">//["red", "green", "black"]</span></span><br></pre></td></tr></table></figure>
+
+<h5 id="递归实现深拷贝："><a href="#递归实现深拷贝：" class="headerlink" title="递归实现深拷贝："></a>递归实现深拷贝：</h5>  <figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">deepClone</span>(<span class="params">obj</span>)</span>&#123;</span><br><span class="line">    <span class="comment">//判断参数是不是一个对象</span></span><br><span class="line">    <span class="keyword">let</span> objClone = obj <span class="keyword">instanceof</span> <span class="built_in">Object</span>?[]:&#123;&#125;;</span><br><span class="line">    <span class="keyword">if</span>(obj &amp;&amp; <span class="keyword">typeof</span> obj===<span class="string">"object"</span>)&#123;</span><br><span class="line">        <span class="keyword">for</span>(key <span class="keyword">in</span> obj)&#123;</span><br><span class="line">            <span class="keyword">if</span>(obj.hasOwnProperty(key))&#123;</span><br><span class="line">                <span class="comment">//判断ojb子元素是否为对象，如果是，递归复制</span></span><br><span class="line">                <span class="keyword">if</span>(obj[key]&amp;&amp;<span class="keyword">typeof</span> obj[key] ===<span class="string">"object"</span>)&#123;</span><br><span class="line">                    objClone[key] = deepClone(obj[key]);</span><br><span class="line">                &#125;<span class="keyword">else</span>&#123;</span><br><span class="line">                    <span class="comment">//如果不是，简单复制</span></span><br><span class="line">                    objClone[key] = obj[key];</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> objClone;</span><br><span class="line">&#125;    </span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> a =&#123;</span><br><span class="line">    x:<span class="number">1</span>,</span><br><span class="line">    y:<span class="number">2</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">b=deepClone(a);</span><br><span class="line">a.x=<span class="number">3</span></span><br><span class="line"><span class="built_in">console</span>.log(a);</span><br><span class="line"><span class="built_in">console</span>.log(b);</span><br></pre></td></tr></table></figure>
+
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>  1：深拷贝只是从源数据中拷贝一份出来进行操作，而不是改变源数据；改变源数据的那是浅拷贝；</p>
+<p>  2：原生js方法slice、concat都不是真正意义上的深拷贝，都仅只适用于一维数组，拷贝的属性不够彻底；</p>
+<p>  3：对象拷贝中Object.assign()第一级属性深拷贝，从第二级属性开始就是浅拷贝；</p>
+<p>  4：实现js深拷贝我们可以通过JSON.parse(JSON.stringify())、递归以及JQuery库的extend方法来实现；</p>
+]]></content>
+      <categories>
+        <category>html5</category>
+      </categories>
+      <tags>
+        <tag>js</tag>
+        <tag>深拷贝</tag>
+        <tag>浅拷贝</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>h5如何判断ios还是android以及相互通信等</title>
+    <url>/2017/02/01/h5%E5%A6%82%E4%BD%95%E5%88%A4%E6%96%ADios%E8%BF%98%E6%98%AFAndroid/</url>
+    <content><![CDATA[<p>经常我们在做h5页面时或者混合app开发时，去和原生app开发人员进行交互等需求。<br>那么这时我们就需要前端去做机型的判断，需要借助navigator对象，如下:</p>
+<figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> u = navigator.userAgent, app = navigator.appVersion;</span><br><span class="line"><span class="keyword">let</span> isAndroid = u.indexOf(<span class="string">'Android'</span>) &gt; <span class="number">-1</span> || u.indexOf(<span class="string">'Linux'</span>) &gt; <span class="number">-1</span>;</span><br><span class="line"><span class="keyword">let</span> isIOS = !!u.match(<span class="regexp">/\(i[^;]+;( U;)? CPU.+Mac OS X/</span>);</span><br><span class="line"><span class="keyword">if</span> (isAndroid) &#123;</span><br><span class="line">  <span class="comment">// 安卓</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">if</span> (isIOS) &#123;</span><br><span class="line">  <span class="comment">// ios</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>&emsp;&emsp;我们可能还会涉及到与原生开发通信等，如下:</p>
+<h5 id="js调用android方法"><a href="#js调用android方法" class="headerlink" title="js调用android方法"></a>js调用android方法</h5><figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"><span class="built_in">window</span>.android.locationReport(webData); <span class="comment">//  android需要和安卓开发定义好,locationReport为定义的方法名,可传参</span></span><br></pre></td></tr></table></figure>
+
+<h5 id="js调用ios方法"><a href="#js调用ios方法" class="headerlink" title="js调用ios方法"></a>js调用ios方法</h5><figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"><span class="built_in">window</span>.webkit.messageHandlers.locationReport.postMessage(webData); <span class="comment">//  locationReport为定义的方法名,可传参</span></span><br></pre></td></tr></table></figure>
+
+<p>如果android和ios需要调用js方法的话，则直接把方法暴露在全局的js下即可，然后原生就可以直接通过webview调用js方法。</p>
+]]></content>
+      <categories>
+        <category>html5</category>
+      </categories>
+      <tags>
+        <tag>js</tag>
+        <tag>html5</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>js之继承方式</title>
+    <url>/2018/03/22/js%E4%B9%8B%E7%BB%A7%E6%89%BF%E6%96%B9%E5%BC%8F/</url>
+    <content><![CDATA[<p>参考阮一峰的文章</p>
+]]></content>
+      <categories>
+        <category>html5</category>
+      </categories>
+      <tags>
+        <tag>js</tag>
+        <tag>es6</tag>
+        <tag>class</tag>
+        <tag>prototype</tag>
+        <tag>继承</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>js判断数据类型</title>
+    <url>/2018/09/23/js%E5%88%A4%E6%96%AD%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B/</url>
+    <content><![CDATA[<h3 id="基本数据类型"><a href="#基本数据类型" class="headerlink" title="基本数据类型"></a>基本数据类型</h3><h5 id="type-of"><a href="#type-of" class="headerlink" title="type of"></a>type of</h5><p>  type of 一些常用的类型来说那算是毫无压力，比如Function、String、Number、Undefined等，但是要是检测Array的对象就不起作用了。 利用typeof除了array和null判断为object外，其他的都可以正常判断</p>
+  <figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="built_in">console</span>.log(<span class="keyword">typeof</span> <span class="literal">null</span>); <span class="comment">// "object"</span></span><br><span class="line"><span class="built_in">console</span>.log(<span class="keyword">typeof</span> <span class="function"><span class="keyword">function</span> (<span class="params"></span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">&#125;); <span class="comment">// "function"</span></span><br><span class="line"><span class="built_in">console</span>.log(<span class="keyword">typeof</span> <span class="string">'凯皇大大'</span>); <span class="comment">// "string"</span></span><br><span class="line"><span class="built_in">console</span>.log(<span class="keyword">typeof</span> <span class="number">1</span>); <span class="comment">// "number"</span></span><br><span class="line"><span class="built_in">console</span>.log(<span class="keyword">typeof</span> a); <span class="comment">// "undefined"</span></span><br><span class="line"><span class="built_in">console</span>.log(<span class="keyword">typeof</span> <span class="literal">undefined</span>); <span class="comment">// "undefined"</span></span><br><span class="line"><span class="built_in">console</span>.log(<span class="keyword">typeof</span> []); <span class="comment">// "object"</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="引用数据类型"><a href="#引用数据类型" class="headerlink" title="引用数据类型"></a>引用数据类型</h3><p>注意:<strong>当你在多个frame中来回穿梭的时候，instanceof和constructor就亚历山大了。由于每个iframe都有一套自己的执行环境，跨frame实例化的对象彼此是不共享原型链的，因此导致上述检测代码失效</strong></p>
+<h5 id="instanceof"><a href="#instanceof" class="headerlink" title="instanceof"></a>instanceof</h5>  <figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">var</span> obj = &#123;</span><br><span class="line">  name: <span class="string">'米斯特黄'</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">var</span> arr = [<span class="number">1</span>];</span><br><span class="line"></span><br><span class="line"><span class="comment">// 对象</span></span><br><span class="line"><span class="built_in">console</span>.log(obj <span class="keyword">instanceof</span> <span class="built_in">Object</span>) <span class="comment">// true</span></span><br><span class="line"><span class="comment">// 数组</span></span><br><span class="line"><span class="built_in">console</span>.log(arr <span class="keyword">instanceof</span> <span class="built_in">Array</span>) <span class="comment">// true</span></span><br></pre></td></tr></table></figure>
+
+<h5 id="constructor-NaN"><a href="#constructor-NaN" class="headerlink" title="constructor"></a>constructor</h5>  <figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="comment">// 沿用上面的变量</span></span><br><span class="line"><span class="comment">// 对象</span></span><br><span class="line"><span class="built_in">console</span>.log(obj.constructor === <span class="built_in">Object</span>) <span class="comment">// true</span></span><br><span class="line"><span class="comment">// 数组</span></span><br><span class="line"><span class="built_in">console</span>.log(arr.constructor === <span class="built_in">Array</span>) <span class="comment">// true</span></span><br></pre></td></tr></table></figure>
+
+<h5 id="Array-isArray"><a href="#Array-isArray" class="headerlink" title="Array.isArray()"></a>Array.isArray()</h5>  <figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="comment">// 数组</span></span><br><span class="line"> <span class="built_in">console</span>.log(<span class="built_in">Array</span>.isArray(arr)); <span class="comment">// true</span></span><br></pre></td></tr></table></figure>
+
+<h5 id="Object-prototype-toString-call"><a href="#Object-prototype-toString-call" class="headerlink" title="Object.prototype.toString.call()"></a>Object.prototype.toString.call()</h5> <figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="comment">// 数组</span></span><br><span class="line"><span class="built_in">console</span>.log(<span class="built_in">Object</span>.prototype.toString.call(arr) === <span class="string">'[object Array]'</span>) <span class="comment">// true</span></span><br></pre></td></tr></table></figure>
+]]></content>
+      <categories>
+        <category>html5</category>
+      </categories>
+      <tags>
+        <tag>js</tag>
+        <tag>数组类型</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>js判断设备Pc还是移动端</title>
+    <url>/2018/11/28/js%E5%88%A4%E6%96%AD%E8%AE%BE%E5%A4%87Pc%E8%BF%98%E6%98%AF%E7%A7%BB%E5%8A%A8%E7%AB%AF/</url>
+    <content><![CDATA[<h3 id="通常我们开发网页的情况下，为了给用户更好的视觉效果，需要判断用户是在浏览器pc打开还是移动端打开。代码如下"><a href="#通常我们开发网页的情况下，为了给用户更好的视觉效果，需要判断用户是在浏览器pc打开还是移动端打开。代码如下" class="headerlink" title="通常我们开发网页的情况下，为了给用户更好的视觉效果，需要判断用户是在浏览器pc打开还是移动端打开。代码如下:"></a>通常我们开发网页的情况下，为了给用户更好的视觉效果，需要判断用户是在浏览器pc打开还是移动端打开。代码如下:</h3><figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">var</span> sUserAgent = navigator.userAgent.toLowerCase();</span><br><span class="line"><span class="keyword">var</span> bIsIpad = sUserAgent.match(<span class="regexp">/ipad/i</span>) == <span class="string">"ipad"</span>;</span><br><span class="line"><span class="keyword">var</span> bIsMidp = sUserAgent.match(<span class="regexp">/midp/i</span>) == <span class="string">"midp"</span>;</span><br><span class="line"><span class="keyword">var</span> bIsUc7 = sUserAgent.match(<span class="regexp">/rv:1.2.3.4/i</span>) == <span class="string">"rv:1.2.3.4"</span>;</span><br><span class="line"><span class="keyword">var</span> bIsIphoneOs = sUserAgent.match(<span class="regexp">/iphone os/i</span>) == <span class="string">"iphone os"</span>;</span><br><span class="line"><span class="keyword">var</span> bIsUc = sUserAgent.match(<span class="regexp">/ucweb/i</span>) == <span class="string">"ucweb"</span>;</span><br><span class="line"><span class="keyword">var</span> bIsAndroid = sUserAgent.match(<span class="regexp">/android/i</span>) == <span class="string">"android"</span>;</span><br><span class="line"><span class="keyword">var</span> bIsCE = sUserAgent.match(<span class="regexp">/windows ce/i</span>) == <span class="string">"windows ce"</span>;</span><br><span class="line"><span class="keyword">var</span> bIsWM = sUserAgent.match(<span class="regexp">/windows mobile/i</span>) == <span class="string">"windows mobile"</span>;</span><br><span class="line"><span class="keyword">if</span> (bIsIpad || bIsIphoneOs || bIsMidp || bIsUc7 || bIsUc || bIsAndroid || bIsCE || bIsWM) &#123;</span><br><span class="line">  <span class="comment">// 移动设备</span></span><br><span class="line">  <span class="built_in">window</span>.location.href = <span class="string">"http://www.baidu.com"</span>;</span><br><span class="line">&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">  <span class="comment">// pc设备</span></span><br><span class="line">  <span class="built_in">window</span>.location.href = <span class="string">"http://www.hk5.club"</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+]]></content>
+      <tags>
+        <tag>js</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>js找出字符串中出现最多的字符</title>
+    <url>/2018/07/01/js%E6%89%BE%E5%87%BA%E5%AD%97%E7%AC%A6%E4%B8%B2%E4%B8%AD%E5%87%BA%E7%8E%B0%E6%9C%80%E5%A4%9A%E7%9A%84%E5%AD%97%E7%AC%A6/</url>
+    <content><![CDATA[<p>最近再面试过程中，有遇到这样一道题，找出出现次数最多的字符，如:</p>
+<pre><code>let str = &apos;abbccceeee&apos;；</code></pre><p>下面我们用代码来实现: </p>
+<h3 id="方法一"><a href="#方法一" class="headerlink" title="方法一"></a>方法一</h3><figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">var</span> st = <span class="string">'我是啊哈嘻嘻嘻啊'</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">getSt</span>(<span class="params">st</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">var</span> obj = &#123;&#125;</span><br><span class="line">  <span class="keyword">for</span> (<span class="keyword">var</span> i = <span class="number">0</span>; i &lt; st.length; i++) &#123;</span><br><span class="line">    <span class="comment">// console.log(st.charAt(i))</span></span><br><span class="line">    <span class="keyword">if</span> (!obj[st.charAt(i)]) &#123;</span><br><span class="line">      <span class="comment">//console.log('不存在')</span></span><br><span class="line">      obj[st.charAt(i)] = <span class="number">1</span></span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">      obj[st.charAt(i)]++</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="built_in">console</span>.log(obj)</span><br><span class="line">  <span class="keyword">var</span> maxnum = <span class="number">0</span></span><br><span class="line">  <span class="keyword">var</span> key = <span class="literal">null</span>;</span><br><span class="line">  <span class="keyword">for</span> (<span class="keyword">var</span> k <span class="keyword">in</span> obj) &#123;</span><br><span class="line">    <span class="keyword">if</span> (maxnum &lt; obj[k]) &#123;</span><br><span class="line">      maxnum = obj[k]</span><br><span class="line">      key = k</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// console.log(obj[k],k)</span></span><br><span class="line">  &#125;</span><br><span class="line">  <span class="built_in">console</span>.log(maxnum, key) <span class="comment">// 3 "嘻"</span></span><br><span class="line">&#125;</span><br><span class="line">getSt(st)</span><br></pre></td></tr></table></figure>
+
+<p>以上就是我的解法，先创建一个obj，然后遍历字符串，添加到obj中，如果有相同的key，则value++;<br>最后在for in  遍历对象比较value，就可以实现改功能。</p>
+<h3 id="方法二"><a href="#方法二" class="headerlink" title="方法二"></a>方法二</h3><figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="comment">// 方法二</span></span><br><span class="line"><span class="keyword">var</span> st = <span class="string">'我是啊哈嘻嘻嘻啊'</span></span><br><span class="line"><span class="keyword">var</span> arr = st.split(<span class="string">""</span>);</span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">getMost</span>(<span class="params">arr</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> arr.reduce(<span class="function"><span class="keyword">function</span> (<span class="params">prev, next</span>) </span>&#123;</span><br><span class="line">    prev[next] = prev[next] + <span class="number">1</span> || <span class="number">1</span>;</span><br><span class="line">    <span class="keyword">return</span> prev;</span><br><span class="line">  &#125;, &#123;&#125;)</span><br><span class="line">&#125;</span><br><span class="line"><span class="built_in">console</span>.log(getMost(arr)); <span class="comment">// &#123;我: 1, 是: 1, 啊: 2, 哈: 1, 嘻: 3&#125;</span></span><br></pre></td></tr></table></figure>
+
+<p>以上方法在拿到结果后直接遍历对象比较value即可。</p>
+]]></content>
+      <categories>
+        <category>html5</category>
+      </categories>
+      <tags>
+        <tag>js</tag>
+        <tag>string</tag>
+        <tag>算法</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>js中数组去重方法</title>
+    <url>/2017/09/21/js%E4%B8%AD%E6%95%B0%E7%BB%84%E5%8E%BB%E9%87%8D%E6%96%B9%E6%B3%95/</url>
+    <content><![CDATA[<p>今天我们来整理下数组去重的方法</p>
+<h3 id="利用ES6-Set去重（ES6中最常用）"><a href="#利用ES6-Set去重（ES6中最常用）" class="headerlink" title="利用ES6 Set去重（ES6中最常用）"></a>利用ES6 Set去重（ES6中最常用）</h3>  <figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">unique</span> (<span class="params">arr</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="built_in">Array</span>.from(<span class="keyword">new</span> <span class="built_in">Set</span>(arr))</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">var</span> arr = [<span class="number">1</span>,<span class="number">1</span>,<span class="string">'true'</span>,<span class="string">'true'</span>,<span class="literal">true</span>,<span class="literal">true</span>,<span class="number">15</span>,<span class="number">15</span>,<span class="literal">false</span>,<span class="literal">false</span>, <span class="literal">undefined</span>,<span class="literal">undefined</span>, <span class="literal">null</span>,<span class="literal">null</span>, <span class="literal">NaN</span>, <span class="literal">NaN</span>,<span class="string">'NaN'</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="string">'a'</span>, <span class="string">'a'</span>,&#123;&#125;,&#123;&#125;];</span><br><span class="line"><span class="built_in">console</span>.log(unique(arr))</span><br><span class="line"><span class="comment">//[1, "true", true, 15, false, undefined, null, NaN, "NaN", 0, "a", &#123;&#125;, &#123;&#125;]</span></span><br></pre></td></tr></table></figure>
+
+<p>  不考虑兼容性，这种去重的方法代码最少。这种方法还无法去掉“{}”空对象，后面的高阶方法会添加去掉重复“{}”的方法。</p>
+<h3 id="利用for嵌套for，然后splice去重（ES5中最常用）"><a href="#利用for嵌套for，然后splice去重（ES5中最常用）" class="headerlink" title="利用for嵌套for，然后splice去重（ES5中最常用）"></a>利用for嵌套for，然后splice去重（ES5中最常用）</h3>  <figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">unique</span>(<span class="params">arr</span>)</span>&#123;            </span><br><span class="line">  <span class="keyword">for</span>(<span class="keyword">var</span> i=<span class="number">0</span>; i&lt;arr.length; i++)&#123;</span><br><span class="line">      <span class="keyword">for</span>(<span class="keyword">var</span> j=i+<span class="number">1</span>; j&lt;arr.length; j++)&#123;</span><br><span class="line">          <span class="keyword">if</span>(arr[i]==arr[j])&#123;         <span class="comment">//第一个等同于第二个，splice方法删除第二个</span></span><br><span class="line">              arr.splice(j,<span class="number">1</span>);</span><br><span class="line">              j--;</span><br><span class="line">          &#125;</span><br><span class="line">      &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> arr;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">var</span> arr = [<span class="number">1</span>,<span class="number">1</span>,<span class="string">'true'</span>,<span class="string">'true'</span>,<span class="literal">true</span>,<span class="literal">true</span>,<span class="number">15</span>,<span class="number">15</span>,<span class="literal">false</span>,<span class="literal">false</span>, <span class="literal">undefined</span>,<span class="literal">undefined</span>, <span class="literal">null</span>,<span class="literal">null</span>, <span class="literal">NaN</span>, <span class="literal">NaN</span>,<span class="string">'NaN'</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="string">'a'</span>, <span class="string">'a'</span>,&#123;&#125;,&#123;&#125;];</span><br><span class="line">    <span class="built_in">console</span>.log(unique(arr))</span><br><span class="line">    <span class="comment">//[1, "true", 15, false, undefined, NaN, NaN, "NaN", "a", &#123;…&#125;, &#123;…&#125;]     //NaN和&#123;&#125;没有去重，两个null直接消失了</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="利用indexOf去重"><a href="#利用indexOf去重" class="headerlink" title="利用indexOf去重"></a>利用indexOf去重</h3>  <figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">unique</span>(<span class="params">arr</span>) </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (!<span class="built_in">Array</span>.isArray(arr)) &#123;</span><br><span class="line">        <span class="built_in">console</span>.log(<span class="string">'type error!'</span>)</span><br><span class="line">        <span class="keyword">return</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">var</span> array = [];</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">var</span> i = <span class="number">0</span>; i &lt; arr.length; i++) &#123;</span><br><span class="line">        <span class="keyword">if</span> (array .indexOf(arr[i]) === <span class="number">-1</span>) &#123;</span><br><span class="line">            array .push(arr[i])</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> array;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">var</span> arr = [<span class="number">1</span>,<span class="number">1</span>,<span class="string">'true'</span>,<span class="string">'true'</span>,<span class="literal">true</span>,<span class="literal">true</span>,<span class="number">15</span>,<span class="number">15</span>,<span class="literal">false</span>,<span class="literal">false</span>, <span class="literal">undefined</span>,<span class="literal">undefined</span>, <span class="literal">null</span>,<span class="literal">null</span>, <span class="literal">NaN</span>, <span class="literal">NaN</span>,<span class="string">'NaN'</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="string">'a'</span>, <span class="string">'a'</span>,&#123;&#125;,&#123;&#125;];</span><br><span class="line"><span class="built_in">console</span>.log(unique(arr))</span><br><span class="line">  <span class="comment">// [1, "true", true, 15, false, undefined, null, NaN, NaN, "NaN", 0, "a", &#123;…&#125;, &#123;…&#125;]  //NaN、&#123;&#125;没有去重</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="利用includes"><a href="#利用includes" class="headerlink" title="利用includes"></a>利用includes</h3>  <figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">unique</span>(<span class="params">arr</span>) </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (!<span class="built_in">Array</span>.isArray(arr)) &#123;</span><br><span class="line">        <span class="built_in">console</span>.log(<span class="string">'type error!'</span>)</span><br><span class="line">        <span class="keyword">return</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">var</span> array =[];</span><br><span class="line">    <span class="keyword">for</span>(<span class="keyword">var</span> i = <span class="number">0</span>; i &lt; arr.length; i++) &#123;</span><br><span class="line">            <span class="keyword">if</span>( !array.includes( arr[i]) ) &#123;<span class="comment">//includes 检测数组是否有某个值</span></span><br><span class="line">                    array.push(arr[i]);</span><br><span class="line">              &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> array</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">var</span> arr = [<span class="number">1</span>,<span class="number">1</span>,<span class="string">'true'</span>,<span class="string">'true'</span>,<span class="literal">true</span>,<span class="literal">true</span>,<span class="number">15</span>,<span class="number">15</span>,<span class="literal">false</span>,<span class="literal">false</span>, <span class="literal">undefined</span>,<span class="literal">undefined</span>, <span class="literal">null</span>,<span class="literal">null</span>, <span class="literal">NaN</span>, <span class="literal">NaN</span>,<span class="string">'NaN'</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="string">'a'</span>, <span class="string">'a'</span>,&#123;&#125;,&#123;&#125;];</span><br><span class="line">    <span class="built_in">console</span>.log(unique(arr))</span><br><span class="line">    <span class="comment">//[1, "true", true, 15, false, undefined, null, NaN, "NaN", 0, "a", &#123;…&#125;, &#123;…&#125;]     //&#123;&#125;没有去重</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="利用hasOwnProperty"><a href="#利用hasOwnProperty" class="headerlink" title="利用hasOwnProperty"></a>利用hasOwnProperty</h3>  <figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">function</span> <span class="title">unique</span>(<span class="params">arr</span>) </span>&#123;</span><br><span class="line">    <span class="keyword">var</span> obj = &#123;&#125;;</span><br><span class="line">    <span class="keyword">return</span> arr.filter(<span class="function"><span class="keyword">function</span>(<span class="params">item, index, arr</span>)</span>&#123;</span><br><span class="line">        <span class="keyword">return</span> obj.hasOwnProperty(<span class="keyword">typeof</span> item + item) ? <span class="literal">false</span> : (obj[<span class="keyword">typeof</span> item + item] = <span class="literal">true</span>)</span><br><span class="line">    &#125;)</span><br><span class="line">  &#125;</span><br><span class="line">    <span class="keyword">var</span> arr = [<span class="number">1</span>,<span class="number">1</span>,<span class="string">'true'</span>,<span class="string">'true'</span>,<span class="literal">true</span>,<span class="literal">true</span>,<span class="number">15</span>,<span class="number">15</span>,<span class="literal">false</span>,<span class="literal">false</span>, <span class="literal">undefined</span>,<span class="literal">undefined</span>, <span class="literal">null</span>,<span class="literal">null</span>, <span class="literal">NaN</span>, <span class="literal">NaN</span>,<span class="string">'NaN'</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="string">'a'</span>, <span class="string">'a'</span>,&#123;&#125;,&#123;&#125;];</span><br><span class="line">        <span class="built_in">console</span>.log(unique(arr))</span><br><span class="line"><span class="comment">//[1, "true", true, 15, false, undefined, null, NaN, "NaN", 0, "a", &#123;…&#125;]   //所有的都去重了</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="利用filter"><a href="#利用filter" class="headerlink" title="利用filter"></a>利用filter</h3>  <figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">unique</span>(<span class="params">arr</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> arr.filter(<span class="function"><span class="keyword">function</span>(<span class="params">item, index, arr</span>) </span>&#123;</span><br><span class="line">    <span class="comment">//当前元素，在原始数组中的第一个索引==当前索引值，否则返回当前元素</span></span><br><span class="line">    <span class="keyword">return</span> arr.indexOf(item, <span class="number">0</span>) === index;</span><br><span class="line">  &#125;);</span><br><span class="line">&#125;</span><br><span class="line">    <span class="keyword">var</span> arr = [<span class="number">1</span>,<span class="number">1</span>,<span class="string">'true'</span>,<span class="string">'true'</span>,<span class="literal">true</span>,<span class="literal">true</span>,<span class="number">15</span>,<span class="number">15</span>,<span class="literal">false</span>,<span class="literal">false</span>, <span class="literal">undefined</span>,<span class="literal">undefined</span>, <span class="literal">null</span>,<span class="literal">null</span>, <span class="literal">NaN</span>, <span class="literal">NaN</span>,<span class="string">'NaN'</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="string">'a'</span>, <span class="string">'a'</span>,&#123;&#125;,&#123;&#125;];</span><br><span class="line">        <span class="built_in">console</span>.log(unique(arr))</span><br><span class="line"><span class="comment">//[1, "true", true, 15, false, undefined, null, "NaN", 0, "a", &#123;…&#125;, &#123;…&#125;]</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="…new-Set-arr"><a href="#…new-Set-arr" class="headerlink" title="[…new Set(arr)]"></a>[…new Set(arr)]</h3>  <figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line">[...new <span class="built_in">Set</span>(arr)] </span><br><span class="line"><span class="comment">//代码就是这么少----（其实，严格来说并不算是一种，相对于第一种方法来说只是简化了代码</span></span><br></pre></td></tr></table></figure>
+]]></content>
+      <categories>
+        <category>html5</category>
+      </categories>
+      <tags>
+        <tag>js</tag>
+        <tag>array</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>react-native快速上手</title>
+    <url>/2021/04/14/react-native%E5%BF%AB%E9%80%9F%E4%B8%8A%E6%89%8B/</url>
+    <content><![CDATA[<h1 id="React-Native-简述"><a href="#React-Native-简述" class="headerlink" title="React Native 简述"></a>React Native 简述</h1><p>Facebook 在 2015 年就开源了 React Native,目前仍然一直再维护和使用中，核心为使用 <code>React</code>技术栈 来创建 <code>Android</code> 和 <code>iOS</code> 的原生应用，将 React 基础抽象组件渲染为原生平台 UI 组件</p>
+<p>React Native 采用了 JavaScriptCore 作为 JS VM，中间通过 JSON 文件与 Bridge 进行通信,其实也是 Hybrid 的一种</p>
+<p>流程：React =&gt; JavaScriptCore =&gt; Native</p>
+<p>中间层涉及到的</p>
+<ul>
+<li>Fabric：React Native 的 UI 层重构</li>
+<li>TurboModules：与 React Native Modules 相关，基于 JSI</li>
+<li>JSI：JavaScript 与 Java/ObjeC/C++ 相互调用的一种机制</li>
+</ul>
+<h3 id="优势"><a href="#优势" class="headerlink" title="优势"></a>优势</h3><ul>
+<li><p>热重载</p>
+<p>热重载允许开发人员将新代码直接注入正在运行的应用程序中，从而加快了开发过程。因此，开发人员可以立即看到更改，而无需重建应用程序。 热重载还[保留了应用程序的状态]，避免了在完全重载期间丢失它的风险（在基于状态的框架中这是一项关键优势），从而进一步加快了应用程序的开发速度。</p>
+</li>
+<li><p>一个代码库，两个移动平台（以及更多 WEB,TV,Windows）</p>
+<p>编写单个代码库为 2 个应用程序提供动力-涵盖 Android 和 iOS 平台。 更妙的是，JavaScript 通过与 Web 应用程序共享代码，在编写跨平台应用程序时为您提供了帮助。这是通过创建可编译为目标平台的抽象组件来完成的。</p>
+</li>
+<li><p>相对成熟度</p>
+<p>官方的 React Native 版本是 2015 年前发布的，因此 Facebook 团队有足够的时间来稳定 API，并专注于解决问题和解决问题。</p>
+</li>
+<li><p>活跃社区</p>
+<p>React Native 有庞大的开发者社区。</p>
+</li>
+<li><p>统一的 react 技术栈</p>
+</li>
+</ul>
+<h1 id="环境搭建"><a href="#环境搭建" class="headerlink" title="环境搭建"></a>环境搭建</h1><p>下面以 macOs 为例子，window，Linux 类似查看相关文档<a href="https://reactnative.cn/docs/environment-setup" target="_blank" rel="noopener">传送门</a></p>
+<blockquote>
+<p>在开始环境搭建前建议用 2 分钟简要浏览本 ReactGuide 第一章节<a href="http://wiki.bigeye.top/document/index?document_id=136" target="_blank" rel="noopener" title="《基础开发环境》">《基础开发环境》</a></p>
+</blockquote>
+<h3 id="开发-Android"><a href="#开发-Android" class="headerlink" title="开发 Android"></a>开发 Android</h3><p>必须安装的依赖有：Node、JDK 和 Android Studio。</p>
+<blockquote>
+<p>强烈建议使用 nvm 管理 node。Homebrew 和 nvm 的安装使用请看<a href="http://wiki.bigeye.top/document/index?document_id=136" target="_blank" rel="noopener" title="这里">这里</a></p>
+</blockquote>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># Homebrew</span></span><br><span class="line">brew install node <span class="comment"># 安装node</span></span><br><span class="line">brew install watchman <span class="comment"># 安装watchman</span></span><br><span class="line">brew cask install adoptopenjdk/openjdk/adoptopenjdk8 <span class="comment"># 安装JDK 暂不支持 1.9 及更高版本，注意 1.8 版本官方也直接称 8 版本</span></span><br></pre></td></tr></table></figure>
+
+<p>安装 Android Studio <a href="https://developer.android.google.cn/studio/" target="_blank" rel="noopener">传送门</a></p>
+<p>安装界面中选择”Custom”选项，确保选中了以下几项：</p>
+<ul>
+<li><p>Android SDK</p>
+</li>
+<li><p>Android SDK Platform</p>
+</li>
+<li><p>Android Virtual Device</p>
+</li>
+</ul>
+<h3 id="开发-iOS"><a href="#开发-iOS" class="headerlink" title="开发 iOS"></a>开发 iOS</h3><p>必须安装的依赖有：Node、Watchman、Xcode 和 CocoaPods。</p>
+<blockquote>
+<p>强烈建议使用 nvm 管理 node。Homebrew 和 nvm 的安装使用请看<a href="http://wiki.bigeye.top/document/index?document_id=136" target="_blank" rel="noopener" title="这里">这里</a></p>
+</blockquote>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># Homebrew</span></span><br><span class="line">brew install node <span class="comment"># 安装node</span></span><br><span class="line">brew install watchman <span class="comment"># 安装watchman</span></span><br><span class="line">brew install cocoapods <span class="comment">#  CocoaPods是用 Ruby 编写的包管理器（可以理解为针对 iOS 的 npm）用来管理依赖</span></span><br></pre></td></tr></table></figure>
+
+<p>安装 Xcode (去 App Store 或者 <a href="https://developer.apple.com/xcode/downloads/" target="_blank" rel="noopener">Apple 开发者官网</a>)</p>
+<blockquote>
+<p>注：新版 Xcode 需要更新 macOS 版本</p>
+</blockquote>
+<h1 id="创建项目"><a href="#创建项目" class="headerlink" title="创建项目"></a>创建项目</h1><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">npx react-native init myapp <span class="comment"># npm 从5.2版开始，增加了 npx 命令,主要用来调用项目内部安装的模块</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">cd</span> myapp</span><br><span class="line">yarn ios</span><br><span class="line"><span class="comment"># 或者</span></span><br><span class="line">yarn react-native run-ios</span><br></pre></td></tr></table></figure>
+
+<p>运行 <code>yarn ios</code>会对项目的原生部分进行编译，同时在另外一个命令行中启动 Metro 服务对 js 代码进行实时打包处理（类似 webpack）。Metro 服务也可以使用 yarn start 命令单独启动。</p>
+<p>metro 是一种支持 ReactNative 的打包工具</p>
+<blockquote>
+<p>注：如果长时间无响应建议切换 npm 下载源 <code>npm config set registry http://registry.npm.taobao.org/</code> 如果切换完下载源仍然无法响应可以先下载 <code>react-native</code> 再执行 <code>react-native init AwesomeProject</code></p>
+</blockquote>
+<h1 id="目录结构（个人暂定）"><a href="#目录结构（个人暂定）" class="headerlink" title="目录结构（个人暂定）"></a>目录结构（个人暂定）</h1><ul>
+<li>src (开发统一源码目录)<ul>
+<li>api ( HTTP 接口，网络请求服务相关 )</li>
+<li>components (组件类)</li>
+<li>views (视图类)</li>
+<li>utils (基础工具类)</li>
+<li>assets (资源类)</li>
+<li>router (路由类包含 tabbar，抽屉等)</li>
+<li>index.js (程序入口)</li>
+<li>Splash.js （闪屏）</li>
+</ul>
+</li>
+</ul>
+<h1 id="react-native-规则"><a href="#react-native-规则" class="headerlink" title="react native 规则"></a>react native 规则</h1><ul>
+<li>不管组件中是否用到 react 都必须引入，否则会报错。</li>
+</ul>
+<figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> React <span class="keyword">from</span> <span class="string">'react'</span>;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>当我们开发时，需要调用的原生组件都是通过 react-native 引入。</li>
+<li>其他使用基本同 React 和 JSX 语法一样。</li>
+</ul>
+<h1 id="常用组件"><a href="#常用组件" class="headerlink" title="常用组件"></a>常用组件</h1><ul>
+<li>View： 属于容器组件。只能用于组件嵌套。</li>
+<li>Text： 文本必须写在 Text,否则报错。会自动换行。设置行数（numberOflines = {3}）更多功能 请查找 API.</li>
+<li>Image: 凡是 uri: 加载必须设置高度和宽度。</li>
+<li>ImageBackground 作为背景图片。可以作为容器。</li>
+<li>Textinput 边框必须设置宽度不然没有颜色。multiline 多行输入。</li>
+<li>一般用 TouchableOpacity 进行封装按钮 Button 在 IOS 是白色。</li>
+<li>ScrollView 组件滚动视图 水平方向 horizontal：true; 滚动, 数据多的话滚动会卡顿。</li>
+<li>FlatList 适合做滚动列表。它里面根据 key 做优化了，做了重用机制，优化性能。</li>
+<li>官方推荐使用 fetch 来获取数据。我们也可以用 axios 来获取。</li>
+</ul>
+<h1 id="Style"><a href="#Style" class="headerlink" title="Style"></a>Style</h1><p>RN 布局统一采用 flex ，<a href="http://www.ruanyifeng.com/blog/2015/07/flex-grammar.html" target="_blank" rel="noopener">传送门</a></p>
+<p>样式名基本上是遵循了 web 上的 CSS 的命名，只是按照 JS 的语法要求使用了驼峰命名法，例如将 background-color 改为 backgroundColor。 样式可以写成内联样式,也可以通过一个变量接收 StyleSheet.create({….})来创建你想要的样式。单位的话不需要加，直接写数字，表示的是与设备像素密度无关的逻辑像素点,通过下面方法可以取到相关尺寸。</p>
+<figure class="highlight js"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> &#123; Dimensions, StatusBar, PixelRatio &#125; <span class="keyword">from</span> <span class="string">'react-native'</span>;</span><br><span class="line"><span class="comment">// PixelRatio：可以获取到设备的像素密度和字体缩放比。</span></span><br><span class="line"><span class="comment">// Dimensions:  来获取设备的宽高</span></span><br><span class="line"><span class="comment">// StatusBar:控制应用状态栏的组件,可以获取相关尺寸</span></span><br><span class="line"><span class="keyword">const</span> windowWidth = Dimensions.get(<span class="string">'window'</span>).width;</span><br><span class="line"><span class="keyword">const</span> windowHeight = Dimensions.get(<span class="string">'window'</span>).height;</span><br></pre></td></tr></table></figure>
+
+<p><a href="https://github.com/doyoe/react-native-stylesheet-guide" target="_blank" rel="noopener">文档参考</a></p>
+<h1 id="关于静态图片资源"><a href="#关于静态图片资源" class="headerlink" title="关于静态图片资源"></a>关于静态图片资源</h1><p>目前原生支持的图片格式有 png、jpg、jpeg、bmp、gif、webp (仅 Android)、psd (仅 iOS)。</p>
+<p>可以使用@2x，@3x 这样的文件名后缀，来为不同的屏幕精度提供图片,Packager 会打包所有的图片并且依据屏幕精度提供对应的资源</p>
+<p>默认情况下 Android 是不支持 GIF 和 WebP 格式的。你需要在 android/app/build.gradle 文件中根据需要手动添加以下模块：</p>
+<figure class="highlight js"><table><tr><td class="code"><pre><span class="line">dependencies &#123;</span><br><span class="line">  <span class="comment">// 如果你需要支持Android4.0(API level 14)之前的版本</span></span><br><span class="line">  implementation <span class="string">'com.facebook.fresco:animated-base-support:1.3.0'</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">// 如果你需要支持GIF动图</span></span><br><span class="line">  implementation <span class="string">'com.facebook.fresco:animated-gif:2.0.0'</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">// 如果你需要支持WebP格式，包括WebP动图</span></span><br><span class="line">  implementation <span class="string">'com.facebook.fresco:animated-webp:2.1.0'</span></span><br><span class="line">  implementation <span class="string">'com.facebook.fresco:webpsupport:2.0.0'</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">// 如果只需要支持WebP格式而不需要动图</span></span><br><span class="line">  implementation <span class="string">'com.facebook.fresco:webpsupport:2.0.0'</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight jsx"><table><tr><td class="code"><pre><span class="line">&lt;Image source=&#123;<span class="built_in">require</span>(<span class="string">'./my-icon.png'</span>)&#125; /&gt;</span><br><span class="line">&lt;Image source=&#123;&#123;<span class="attr">uri</span>: <span class="string">'https://reactnative.dev/img/tiny_logo.png'</span>&#125;&#125;/&gt;</span><br></pre></td></tr></table></figure>
+
+<h1 id="React-Native-0-60-Autolinking-第三方库使用"><a href="#React-Native-0-60-Autolinking-第三方库使用" class="headerlink" title="React Native 0.60 Autolinking(第三方库使用)"></a>React Native 0.60 Autolinking(第三方库使用)</h1><p>旧版第三方依赖库是需要执行 <code>react-native link</code> 来关联原生程序，新版 0.6 以后统一使用 <code>cd ios &amp;&amp; pod install &amp;&amp; cd ..</code></p>
+<p>有了 <code>autolinking</code> 特性后，我们不需要再手动执行 <code>link</code> 命令来链接原生库。但是在 <code>ios</code> 平台上，我们需要使用 <code>pod install</code> 命令来安装原生依赖。也就是说，在安卓平台上，RN 会自动帮我们处理原生依赖，ios 则使用了 pod 来管理。</p>
+<h1 id="网络请求"><a href="#网络请求" class="headerlink" title="网络请求"></a>网络请求</h1><p>React Native 推荐使用 <code>fetch</code>，当然也支持 xhr ，和 axios 库</p>
+<p><a href="https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API" target="_blank" rel="noopener">fetch 文档</a></p>
+<p>支持 WebSocket</p>
+<h1 id="路由"><a href="#路由" class="headerlink" title="路由"></a>路由</h1><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">yarn add @react-navigation/native</span><br></pre></td></tr></table></figure>
+
+<p>文档地址：<a href="https://reactnavigation.org/" target="_blank" rel="noopener">https://reactnavigation.org/</a></p>
+<h1 id="多环境配置"><a href="#多环境配置" class="headerlink" title="多环境配置"></a>多环境配置</h1><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">yarn add react-native-config</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>开发 iOS 记得执行上面 cd ios &amp;&amp; pod install 关联程序根目录配置文件：</p>
+</blockquote>
+<ul>
+<li><p>.env.development（开发）</p>
+</li>
+<li><p>.env.release（测试）</p>
+</li>
+<li><p>.env.production（生产）</p>
+<p><a href="https://www.dazhuanlan.com/2019/12/27/5e059d94b0a42/" target="_blank" rel="noopener">参考教程</a></p>
+</li>
+</ul>
+<figure class="highlight js"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> Config <span class="keyword">from</span> <span class="string">'react-native-config</span></span><br><span class="line"><span class="string">// Config 对象即为根配置环境参数</span></span><br></pre></td></tr></table></figure>
+
+<h1 id="构建-APP"><a href="#构建-APP" class="headerlink" title="构建 APP"></a>构建 APP</h1>]]></content>
+      <categories>
+        <category>app</category>
+        <category>react</category>
+      </categories>
+      <tags>
+        <tag>多端框架</tag>
+        <tag>app</tag>
+        <tag>react</tag>
+        <tag>react-native</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>promise详解</title>
+    <url>/2017/07/20/promise%E8%AF%A6%E8%A7%A3/</url>
+    <content><![CDATA[<p>最近在整理面试题，今天主要来讲讲promise:</p>
+<h3 id="promise是什么"><a href="#promise是什么" class="headerlink" title="promise是什么"></a>promise是什么</h3><p> ES6原生提供了Promise对象，它是异步编程的一种解决方案</p>
+<h5 id="特点"><a href="#特点" class="headerlink" title="特点:"></a>特点:</h5><p>  &emsp;&emsp;1.对象状态不受外界影响，只有异步操作的结果才能决定当前是哪一种状态。<br>        三种状态: pending(进行中)/fulilled(已成功)/rejected(已失败)。<br>  &emsp;&emsp;2.状态一旦发生改变就不会再变，pending-&gt;fulilled(已成功)-&gt;resolve,pending-&gt;rejected-&gt;reject<br>        (实例生成以后，用then方法分别指定resolved状态和rejected状态的回调函数)</p>
+<h5 id="优点"><a href="#优点" class="headerlink" title="优点:"></a>优点:</h5><p>  &emsp;&emsp;异步操作将以同步的操作流程表达出来，避免层层嵌套的回调函数<br>  &emsp;&emsp;promise对象提供了统一的接口，使控制异步操作更加容易<br>  &emsp;&emsp;链式操作：可以在then中继续写Promise对象并返回，然后继续调用then来进行回调操作</p>
+<h5 id="缺点"><a href="#缺点" class="headerlink" title="缺点:"></a>缺点:</h5><p>  &emsp;&emsp;无法取消，一旦新建就会立即执行，无法中途取消<br>  &emsp;&emsp;若不设置回调函数，promise内部会抛出错误，刽反映到外部<br>  &emsp;&emsp;当出于pending时，无法知道当前进展到哪一阶段</p>
+<h3 id="promise基本用法"><a href="#promise基本用法" class="headerlink" title="promise基本用法"></a>promise基本用法</h3><h5 id="用构造函数创建一个promise实例"><a href="#用构造函数创建一个promise实例" class="headerlink" title="用构造函数创建一个promise实例"></a>用构造函数创建一个promise实例</h5>  <figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">const</span> promise = <span class="keyword">new</span> <span class="built_in">Promise</span>(<span class="function"><span class="keyword">function</span> (<span class="params">resolve, reject</span>) </span>&#123;</span><br><span class="line">  <span class="comment">// ... some code</span></span><br><span class="line">  <span class="keyword">if</span> (<span class="comment">/* 异步操作成功 */</span> ) &#123;</span><br><span class="line">    resolve(value);</span><br><span class="line">  &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    reject(error);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+
+<p>  resolve函数的作用是，将Promise对象的状态从“未完成”变为“成功”（即从 pending 变为 resolved），在异步操作成功时调用，并将异步操作的结果，作为参数传递出去；<br>  reject函数的作用是，将Promise对象的状态从“未完成”变为“失败”（即从 pending 变为 rejected），在异步操作失败时调用，并将异步操作报出的错误，作为参数传递出去。</p>
+<p>  Promise实例生成以后，可以用then方法分别指定resolved状态和rejected状态的回调函数。</p>
+  <figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line">promise.then(<span class="function"><span class="keyword">function</span>(<span class="params">value</span>) </span>&#123;</span><br><span class="line">  <span class="comment">// success</span></span><br><span class="line">&#125;, <span class="function"><span class="keyword">function</span>(<span class="params">error</span>) </span>&#123;</span><br><span class="line">  <span class="comment">// failure</span></span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+
+<p>  then方法可以接受两个回调函数作为参数。第一个回调函数是Promise对象的状态变为resolved时调用，第二个回调函数是Promise对象的状态变为rejected时调用。<br>  其中，第二个函数是可选的，不一定要提供。这两个函数都接受Promise对象传出的值作为参数。</p>
+<h5 id="下面是一个Promise对象的简单例子"><a href="#下面是一个Promise对象的简单例子" class="headerlink" title="下面是一个Promise对象的简单例子"></a>下面是一个Promise对象的简单例子</h5>  <figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">timeout</span>(<span class="params">ms</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="keyword">new</span> <span class="built_in">Promise</span>(<span class="function">(<span class="params">resolve, reject</span>) =&gt;</span> &#123;</span><br><span class="line">    setTimeout(resolve, ms, <span class="string">'done'</span>);</span><br><span class="line">  &#125;);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">timeout(<span class="number">100</span>).then(<span class="function">(<span class="params">value</span>) =&gt;</span> &#123;</span><br><span class="line">  <span class="built_in">console</span>.log(value);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+
+<p>  上面代码中，timeout方法返回一个Promise实例，表示一段时间以后才会发生的结果。过了指定的时间（ms参数）以后，Promise实例的状态变为resolved，就会触发then方法绑定的回调函数。</p>
+<p>  Promise 新建后就会立即执行。</p>
+  <figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">let</span> promise = <span class="keyword">new</span> <span class="built_in">Promise</span>(<span class="function"><span class="keyword">function</span>(<span class="params">resolve, reject</span>) </span>&#123;</span><br><span class="line">  <span class="built_in">console</span>.log(<span class="string">'Promise'</span>);</span><br><span class="line">  resolve();</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">promise.then(<span class="function"><span class="keyword">function</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">  <span class="built_in">console</span>.log(<span class="string">'resolved.'</span>);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line"><span class="built_in">console</span>.log(<span class="string">'Hi!'</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">// Promise</span></span><br><span class="line"><span class="comment">// Hi!</span></span><br><span class="line"><span class="comment">// resolved</span></span><br></pre></td></tr></table></figure>
+
+<p>  上面代码中，Promise 新建后立即执行，所以首先输出的是Promise。<br>  然后，then方法指定的回调函数，将在当前脚本所有同步任务执行完才会执行，所以resolved最后输出。</p>
+<p>  下面是异步加载图片的例子。</p>
+  <figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">loadImageAsync</span>(<span class="params">url</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="keyword">new</span> <span class="built_in">Promise</span>(<span class="function"><span class="keyword">function</span>(<span class="params">resolve, reject</span>) </span>&#123;</span><br><span class="line">    <span class="keyword">const</span> image = <span class="keyword">new</span> Image();</span><br><span class="line"></span><br><span class="line">    image.onload = <span class="function"><span class="keyword">function</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">      resolve(image);</span><br><span class="line">    &#125;;</span><br><span class="line"></span><br><span class="line">    image.onerror = <span class="function"><span class="keyword">function</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">      reject(<span class="keyword">new</span> <span class="built_in">Error</span>(<span class="string">'Could not load image at '</span> + url));</span><br><span class="line">    &#125;;</span><br><span class="line"></span><br><span class="line">    image.src = url;</span><br><span class="line">  &#125;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>  上面代码中，使用Promise包装了一个图片加载的异步操作。如果加载成功，就调用resolve方法，否则就调用reject方法。</p>
+<p>  下面是一个用Promise对象实现的 Ajax 操作的例子</p>
+  <figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">const</span> getJSON = <span class="function"><span class="keyword">function</span>(<span class="params">url</span>) </span>&#123;</span><br><span class="line"><span class="keyword">const</span> promise = <span class="keyword">new</span> <span class="built_in">Promise</span>(<span class="function"><span class="keyword">function</span>(<span class="params">resolve, reject</span>)</span>&#123;</span><br><span class="line">    <span class="keyword">const</span> handler = <span class="function"><span class="keyword">function</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">      <span class="keyword">if</span> (<span class="keyword">this</span>.readyState !== <span class="number">4</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="keyword">if</span> (<span class="keyword">this</span>.status === <span class="number">200</span>) &#123;</span><br><span class="line">        resolve(<span class="keyword">this</span>.response);</span><br><span class="line">      &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        reject(<span class="keyword">new</span> <span class="built_in">Error</span>(<span class="keyword">this</span>.statusText));</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;;</span><br><span class="line">    <span class="keyword">const</span> client = <span class="keyword">new</span> XMLHttpRequest();</span><br><span class="line">    client.open(<span class="string">"GET"</span>, url);</span><br><span class="line">    client.onreadystatechange = handler;</span><br><span class="line">    client.responseType = <span class="string">"json"</span>;</span><br><span class="line">    client.setRequestHeader(<span class="string">"Accept"</span>, <span class="string">"application/json"</span>);</span><br><span class="line">    client.send();</span><br><span class="line"></span><br><span class="line">  &#125;);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> promise;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">getJSON(<span class="string">"/posts.json"</span>).then(<span class="function"><span class="keyword">function</span>(<span class="params">json</span>) </span>&#123;</span><br><span class="line">  <span class="built_in">console</span>.log(<span class="string">'Contents: '</span> + json);</span><br><span class="line">&#125;, <span class="function"><span class="keyword">function</span>(<span class="params">error</span>) </span>&#123;</span><br><span class="line">  <span class="built_in">console</span>.error(<span class="string">'出错了'</span>, error);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+
+<p>  上面代码中，getJSON是对 XMLHttpRequest 对象的封装，用于发出一个针对 JSON 数据的 HTTP 请求，并且返回一个Promise对象。需要注意的是，在getJSON内部，resolve函数和reject函数调用时，都带有参数。</p>
+<p>  一般来说，调用resolve或reject以后，Promise 的使命就完成了，后继操作应该放到then方法里面，而不应该直接写在resolve或reject的后面。所以，最好在它们前面加上return语句，这样就不会有意外。</p>
+  <figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">new</span> <span class="built_in">Promise</span>(<span class="function">(<span class="params">resolve, reject</span>) =&gt;</span> &#123;</span><br><span class="line">  <span class="keyword">return</span> resolve(<span class="number">1</span>);</span><br><span class="line">  <span class="comment">// 后面的语句不会执行</span></span><br><span class="line">  <span class="built_in">console</span>.log(<span class="number">2</span>);</span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
+
+<h3 id="Promise-prototype-then"><a href="#Promise-prototype-then" class="headerlink" title="Promise.prototype.then()"></a>Promise.prototype.then()</h3><p>  Promise 实例具有then方法，也就是说，then方法是定义在原型对象Promise.prototype上的。它的作用是为 Promise 实例添加状态改变时的回调函数。前面说过，then方法的第一个参数是resolved状态的回调函数，第二个参数（可选）是rejected状态的回调函数。</p>
+<p>  then方法返回的是一个新的Promise实例（注意，不是原来那个Promise实例）。因此可以采用链式写法，即then方法后面再调用另一个then方法。</p>
+  <figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line">getJSON(<span class="string">"/posts.json"</span>).then(<span class="function"><span class="keyword">function</span>(<span class="params">json</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> json.post;</span><br><span class="line">&#125;).then(<span class="function"><span class="keyword">function</span>(<span class="params">post</span>) </span>&#123;</span><br><span class="line">  <span class="comment">// ...</span></span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+
+<p>  上面的代码使用then方法，依次指定了两个回调函数。第一个回调函数完成以后，会将返回结果作为参数，传入第二个回调函数。</p>
+<p>  采用链式的then，可以指定一组按照次序调用的回调函数。这时，前一个回调函数，有可能返回的还是一个Promise对象（即有异步操作），这时后一个回调函数，就会等待该Promise对象的状态发生变化，才会被调用。</p>
+  <figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line">getJSON(<span class="string">"/post/1.json"</span>).then(<span class="function"><span class="keyword">function</span>(<span class="params">post</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> getJSON(post.commentURL);</span><br><span class="line">&#125;).then(<span class="function"><span class="keyword">function</span> (<span class="params">comments</span>) </span>&#123;</span><br><span class="line">  <span class="built_in">console</span>.log(<span class="string">"resolved: "</span>, comments);</span><br><span class="line">&#125;, <span class="function"><span class="keyword">function</span> (<span class="params">err</span>)</span>&#123;</span><br><span class="line">  <span class="built_in">console</span>.log(<span class="string">"rejected: "</span>, err);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+
+<p>  上面代码中，第一个then方法指定的回调函数，返回的是另一个Promise对象。这时，第二个then方法指定的回调函数，就会等待这个新的Promise对象状态发生变化。如果变为resolved，就调用第一个回调函数，如果状态变为rejected，就调用第二个回调函数。</p>
+<h3 id="Promise-prototype-catch"><a href="#Promise-prototype-catch" class="headerlink" title="Promise.prototype.catch()"></a>Promise.prototype.catch()</h3><p>  Promise.prototype.catch方法是.then(null, rejection)或.then(undefined, rejection)的别名，用于指定发生错误时的回调函数。</p>
+  <figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line">getJSON(<span class="string">'/posts.json'</span>).then(<span class="function"><span class="keyword">function</span>(<span class="params">posts</span>) </span>&#123;</span><br><span class="line">  <span class="comment">// ...</span></span><br><span class="line">&#125;).catch(<span class="function"><span class="keyword">function</span>(<span class="params">error</span>) </span>&#123;</span><br><span class="line">  <span class="comment">// 处理 getJSON 和 前一个回调函数运行时发生的错误</span></span><br><span class="line">  <span class="built_in">console</span>.log(<span class="string">'发生错误！'</span>, error);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+
+<p>  上面代码中，getJSON方法返回一个 Promise 对象，如果该对象状态变为resolved，则会调用then方法指定的回调函数；如果异步操作抛出错误，状态就会变为rejected，就会调用catch方法指定的回调函数，处理这个错误。另外，then方法指定的回调函数，如果运行中抛出错误，也会被catch方法捕获。</p>
+<p>  如果 Promise 状态已经变成resolved，再抛出错误是无效的。</p>
+  <figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">const</span> promise = <span class="keyword">new</span> <span class="built_in">Promise</span>(<span class="function"><span class="keyword">function</span>(<span class="params">resolve, reject</span>) </span>&#123;</span><br><span class="line">  resolve(<span class="string">'ok'</span>);</span><br><span class="line">  <span class="keyword">throw</span> <span class="keyword">new</span> <span class="built_in">Error</span>(<span class="string">'test'</span>);</span><br><span class="line">&#125;);</span><br><span class="line">promise</span><br><span class="line">  .then(<span class="function"><span class="keyword">function</span>(<span class="params">value</span>) </span>&#123; <span class="built_in">console</span>.log(value) &#125;)</span><br><span class="line">  .catch(<span class="function"><span class="keyword">function</span>(<span class="params">error</span>) </span>&#123; <span class="built_in">console</span>.log(error) &#125;);</span><br><span class="line"><span class="comment">// ok</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="Promise-prototype-finally"><a href="#Promise-prototype-finally" class="headerlink" title="Promise.prototype.finally()"></a>Promise.prototype.finally()</h3><p>  finally方法用于指定不管 Promise 对象最后状态如何，都会执行的操作。该方法是 ES2018 引入标准的。</p>
+  <figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line">promise</span><br><span class="line">.then(<span class="function"><span class="params">result</span> =&gt;</span> &#123;···&#125;)</span><br><span class="line">.catch(<span class="function"><span class="params">error</span> =&gt;</span> &#123;···&#125;)</span><br><span class="line">.finally(<span class="function"><span class="params">()</span> =&gt;</span> &#123;···&#125;);</span><br></pre></td></tr></table></figure>
+
+<p>  上面代码中，不管promise最后的状态，在执行完then或catch指定的回调函数以后，都会执行finally方法指定的回调函数。</p>
+  <figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line">promise</span><br><span class="line">  .finally(<span class="function"><span class="params">()</span> =&gt;</span> &#123;</span><br><span class="line">    <span class="comment">// 语句</span></span><br><span class="line">  &#125;);</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 等同于</span></span><br><span class="line">  promise</span><br><span class="line">  .then(</span><br><span class="line">    result =&gt; &#123;</span><br><span class="line">      <span class="comment">// 语句</span></span><br><span class="line">      <span class="keyword">return</span> result;</span><br><span class="line">    &#125;,</span><br><span class="line">    error =&gt; &#123;</span><br><span class="line">      <span class="comment">// 语句</span></span><br><span class="line">      <span class="keyword">throw</span> error;</span><br><span class="line">    &#125;</span><br><span class="line">  );</span><br></pre></td></tr></table></figure>
+
+<p>  上面代码中，如果不使用finally方法，同样的语句需要为成功和失败两种情况各写一次。有了finally方法，则只需要写一次。</p>
+  <figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="built_in">Promise</span>.prototype.finally = <span class="function"><span class="keyword">function</span> (<span class="params">callback</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">let</span> P = <span class="keyword">this</span>.constructor;</span><br><span class="line">  <span class="keyword">return</span> <span class="keyword">this</span>.then(</span><br><span class="line">    value  =&gt; P.resolve(callback()).then(<span class="function"><span class="params">()</span> =&gt;</span> value),</span><br><span class="line">    reason =&gt; P.resolve(callback()).then(<span class="function"><span class="params">()</span> =&gt;</span> &#123; <span class="keyword">throw</span> reason &#125;)</span><br><span class="line">  );</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>  上面代码中，不管前面的 Promise 是fulfilled还是rejected，都会执行回调函数callback。</p>
+<p>  从上面的实现还可以看到，finally方法总是会返回原来的值。</p>
+  <figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="comment">// resolve 的值是 undefined</span></span><br><span class="line"><span class="built_in">Promise</span>.resolve(<span class="number">2</span>).then(<span class="function"><span class="params">()</span> =&gt;</span> &#123;&#125;, () =&gt; &#123;&#125;)</span><br><span class="line"></span><br><span class="line"><span class="comment">// resolve 的值是 2</span></span><br><span class="line"><span class="built_in">Promise</span>.resolve(<span class="number">2</span>).finally(<span class="function"><span class="params">()</span> =&gt;</span> &#123;&#125;)</span><br><span class="line"></span><br><span class="line"><span class="comment">// reject 的值是 undefined</span></span><br><span class="line"><span class="built_in">Promise</span>.reject(<span class="number">3</span>).then(<span class="function"><span class="params">()</span> =&gt;</span> &#123;&#125;, () =&gt; &#123;&#125;)</span><br><span class="line"></span><br><span class="line"><span class="comment">// reject 的值是 3</span></span><br><span class="line"><span class="built_in">Promise</span>.reject(<span class="number">3</span>).finally(<span class="function"><span class="params">()</span> =&gt;</span> &#123;&#125;)</span><br></pre></td></tr></table></figure>
+
+<h3 id="Promise-all"><a href="#Promise-all" class="headerlink" title="Promise.all()"></a>Promise.all()</h3><p>  Promise.all()方法用于将多个 Promise 实例，包装成一个新的 Promise 实例。</p>
+  <figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">const</span> p = <span class="built_in">Promise</span>.all([p1, p2, p3]);</span><br></pre></td></tr></table></figure>
+<p>  上面代码中，Promise.all()方法接受一个数组作为参数，p1、p2、p3都是 Promise 实例，如果不是，就会先调用下面讲到的Promise.resolve方法，将参数转为 Promise 实例，再进一步处理。另外，Promise.all()方法的参数可以不是数组，但必须具有 Iterator 接口，且返回的每个成员都是 Promise 实例。</p>
+<p>  p的状态由p1、p2、p3决定，分成两种情况。</p>
+<p>  （1）只有p1、p2、p3的状态都变成fulfilled，p的状态才会变成fulfilled，此时p1、p2、p3的返回值组成一个数组，传递给p的回调函数。</p>
+<p>  （2）只要p1、p2、p3之中有一个被rejected，p的状态就变成rejected，此时第一个被reject的实例的返回值，会传递给p的回调函数。</p>
+<h3 id="Promise-race"><a href="#Promise-race" class="headerlink" title="Promise.race()"></a>Promise.race()</h3><p>  Promise.race()方法同样是将多个 Promise 实例，包装成一个新的 Promise 实例。</p>
+  <figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">const</span> p = <span class="built_in">Promise</span>.race([p1, p2, p3]);</span><br></pre></td></tr></table></figure>
+
+<p>  上面代码中，只要p1、p2、p3之中有一个实例率先改变状态，p的状态就跟着改变。那个率先改变的 Promise 实例的返回值，就传递给p的回调函数。</p>
+<p>  Promise.race()方法的参数与Promise.all()方法一样，如果不是 Promise 实例，就会先调用下面讲到的Promise.resolve()方法，将参数转为 Promise 实例，再进一步处理。  </p>
+<h3 id="Promise-allSettled"><a href="#Promise-allSettled" class="headerlink" title="Promise.allSettled()"></a>Promise.allSettled()</h3><p>  Promise.allSettled()方法接受一组 Promise 实例作为参数，包装成一个新的 Promise 实例。只有等到所有这些参数实例都返回结果，不管是fulfilled还是rejected，包装实例才会结束。该方法由 ES2020 引入。</p>
+  <figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">const</span> promises = [</span><br><span class="line">  fetch(<span class="string">'/api-1'</span>),</span><br><span class="line">  fetch(<span class="string">'/api-2'</span>),</span><br><span class="line">  fetch(<span class="string">'/api-3'</span>),</span><br><span class="line">];</span><br><span class="line"></span><br><span class="line"><span class="keyword">await</span> <span class="built_in">Promise</span>.allSettled(promises);</span><br><span class="line">removeLoadingIndicator();</span><br></pre></td></tr></table></figure>
+
+<p>  上面代码对服务器发出三个请求，等到三个请求都结束，不管请求成功还是失败，加载的滚动图标就会消失。</p>
+<p>  该方法返回的新的 Promise 实例，一旦结束，状态总是fulfilled，不会变成rejected。状态变成fulfilled后，Promise 的监听函数接收到的参数是一个数组，每个成员对应一个传入Promise.allSettled()的 Promise 实例。</p>
+<h3 id="Promise-any"><a href="#Promise-any" class="headerlink" title="Promise.any()"></a>Promise.any()</h3><p>  Promise.any()方法接受一组 Promise 实例作为参数，包装成一个新的 Promise 实例。只要参数实例有一个变成fulfilled状态，包装实例就会变成fulfilled状态；如果所有参数实例都变成rejected状态，包装实例就会变成rejected状态。该方法目前是一个第三阶段的提案 。</p>
+<p>  Promise.any()跟Promise.race()方法很像，只有一点不同，就是不会因为某个 Promise 变成rejected状态而结束。</p>
+<h3 id="Promise-resolve"><a href="#Promise-resolve" class="headerlink" title="Promise.resolve()"></a>Promise.resolve()</h3><p>  有时需要将现有对象转为 Promise 对象，Promise.resolve()方法就起到这个作用。</p>
+  <figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">const</span> jsPromise = <span class="built_in">Promise</span>.resolve($.ajax(<span class="string">'/whatever.json'</span>));</span><br></pre></td></tr></table></figure>
+
+<p>  上面代码将 jQuery 生成的deferred对象，转为一个新的 Promise 对象。</p>
+<p>  Promise.resolve()等价于下面的写法。</p>
+  <figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="built_in">Promise</span>.resolve(<span class="string">'foo'</span>)</span><br><span class="line"><span class="comment">// 等价于</span></span><br><span class="line"><span class="keyword">new</span> <span class="built_in">Promise</span>(<span class="function"><span class="params">resolve</span> =&gt;</span> resolve(<span class="string">'foo'</span>))</span><br><span class="line"><span class="built_in">Promise</span>.resolve方法的参数分成四种情况。</span><br></pre></td></tr></table></figure>
+
+<p>（1）参数是一个 Promise 实例</p>
+<p>  如果参数是 Promise 实例，那么Promise.resolve将不做任何修改、原封不动地返回这个实例。</p>
+<p>（2）参数是一个thenable对象</p>
+<p>  thenable对象指的是具有then方法的对象，比如下面这个对象。</p>
+  <figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">let</span> thenable = &#123;</span><br><span class="line">  then: <span class="function"><span class="keyword">function</span>(<span class="params">resolve, reject</span>) </span>&#123;</span><br><span class="line">    resolve(<span class="number">42</span>);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>  Promise.resolve方法会将这个对象转为 Promise 对象，然后就立即执行thenable对象的then方法。</p>
+  <figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">let</span> thenable = &#123;</span><br><span class="line">  then: <span class="function"><span class="keyword">function</span>(<span class="params">resolve, reject</span>) </span>&#123;</span><br><span class="line">    resolve(<span class="number">42</span>);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> p1 = <span class="built_in">Promise</span>.resolve(thenable);</span><br><span class="line">p1.then(<span class="function"><span class="keyword">function</span>(<span class="params">value</span>) </span>&#123;</span><br><span class="line">  <span class="built_in">console</span>.log(value);  <span class="comment">// 42</span></span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+
+<p>  上面代码中，thenable对象的then方法执行后，对象p1的状态就变为resolved，从而立即执行最后那个then方法指定的回调函数，输出 42。</p>
+<p>  （3）参数不是具有then方法的对象，或根本就不是对象</p>
+<p>  如果参数是一个原始值，或者是一个不具有then方法的对象，则Promise.resolve方法返回一个新的 Promise 对象，状态为resolved。</p>
+  <figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">const</span> p = <span class="built_in">Promise</span>.resolve(<span class="string">'Hello'</span>);</span><br><span class="line"></span><br><span class="line">p.then(<span class="function"><span class="keyword">function</span> (<span class="params">s</span>)</span>&#123;</span><br><span class="line">  <span class="built_in">console</span>.log(s)</span><br><span class="line">&#125;);</span><br><span class="line"><span class="comment">// Hello</span></span><br></pre></td></tr></table></figure>
+
+<p>  上面代码生成一个新的 Promise 对象的实例p。由于字符串Hello不属于异步操作（判断方法是字符串对象不具有 then 方法），返回 Promise 实例的状态从一生成就是resolved，所以回调函数会立即执行。Promise.resolve方法的参数，会同时传给回调函数。</p>
+<p>  （4）不带有任何参数</p>
+<p>  Promise.resolve()方法允许调用时不带参数，直接返回一个resolved状态的 Promise 对象。</p>
+<p>  所以，如果希望得到一个 Promise 对象，比较方便的方法就是直接调用Promise.resolve()方法。</p>
+  <figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">const</span> p = <span class="built_in">Promise</span>.resolve();</span><br><span class="line"></span><br><span class="line">p.then(<span class="function"><span class="keyword">function</span> (<span class="params"></span>) </span>&#123;</span><br><span class="line">  <span class="comment">// ...</span></span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+
+<p>  上面代码的变量p就是一个 Promise 对象。</p>
+<p>  需要注意的是，立即resolve()的 Promise 对象，是在本轮“事件循环”（event loop）的结束时执行，而不是在下一轮“事件循环”的开始时。</p>
+  <figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line">setTimeout(<span class="function"><span class="keyword">function</span> (<span class="params"></span>) </span>&#123;</span><br><span class="line">  <span class="built_in">console</span>.log(<span class="string">'three'</span>);</span><br><span class="line">&#125;, <span class="number">0</span>);</span><br><span class="line"></span><br><span class="line"><span class="built_in">Promise</span>.resolve().then(<span class="function"><span class="keyword">function</span> (<span class="params"></span>) </span>&#123;</span><br><span class="line">  <span class="built_in">console</span>.log(<span class="string">'two'</span>);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line"><span class="built_in">console</span>.log(<span class="string">'one'</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">// one</span></span><br><span class="line"><span class="comment">// two</span></span><br><span class="line"><span class="comment">// three</span></span><br></pre></td></tr></table></figure>
+
+<p>  上面代码中，setTimeout(fn, 0)在下一轮“事件循环”开始时执行，Promise.resolve()在本轮“事件循环”结束时执行，console.log(‘one’)则是立即执行，因此最先输出。</p>
+<h3 id="Promise-reject"><a href="#Promise-reject" class="headerlink" title="Promise.reject()"></a>Promise.reject()</h3><p>  Promise.reject(reason)方法也会返回一个新的 Promise 实例，该实例的状态为rejected。</p>
+  <figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">const</span> p = <span class="built_in">Promise</span>.reject(<span class="string">'出错了'</span>);</span><br><span class="line"><span class="comment">// 等同于</span></span><br><span class="line"><span class="keyword">const</span> p = <span class="keyword">new</span> <span class="built_in">Promise</span>(<span class="function">(<span class="params">resolve, reject</span>) =&gt;</span> reject(<span class="string">'出错了'</span>))</span><br><span class="line"></span><br><span class="line">p.then(<span class="literal">null</span>, <span class="function"><span class="keyword">function</span> (<span class="params">s</span>) </span>&#123;</span><br><span class="line">  <span class="built_in">console</span>.log(s)</span><br><span class="line">&#125;);</span><br><span class="line"><span class="comment">// 出错了</span></span><br></pre></td></tr></table></figure>
+<p>  上面代码生成一个 Promise 对象的实例p，状态为rejected，回调函数会立即执行。</p>
+<p>  注意，Promise.reject()方法的参数，会原封不动地作为reject的理由，变成后续方法的参数。这一点与Promise.resolve方法不一致。</p>
+  <figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">const</span> thenable = &#123;</span><br><span class="line">  then(resolve, reject) &#123;</span><br><span class="line">    reject(<span class="string">'出错了'</span>);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="built_in">Promise</span>.reject(thenable)</span><br><span class="line">.catch(<span class="function"><span class="params">e</span> =&gt;</span> &#123;</span><br><span class="line">  <span class="built_in">console</span>.log(e === thenable)</span><br><span class="line">&#125;)</span><br><span class="line"><span class="comment">// true</span></span><br></pre></td></tr></table></figure>
+
+<p>  上面代码中，Promise.reject方法的参数是一个thenable对象，执行以后，后面catch方法的参数不是reject抛出的“出错了”这个字符串，而是thenable对象。</p>
+<h3 id="应用"><a href="#应用" class="headerlink" title="应用"></a>应用</h3><p>  加载图片</p>
+<p>  我们可以将图片的加载写成一个Promise，一旦加载完成，Promise的状态就发生变化。</p>
+  <figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line">  <span class="keyword">const</span> preloadImage = <span class="function"><span class="keyword">function</span> (<span class="params">path</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="keyword">new</span> <span class="built_in">Promise</span>(<span class="function"><span class="keyword">function</span> (<span class="params">resolve, reject</span>) </span>&#123;</span><br><span class="line">    <span class="keyword">const</span> image = <span class="keyword">new</span> Image();</span><br><span class="line">    image.onload  = resolve;</span><br><span class="line">    image.onerror = reject;</span><br><span class="line">    image.src = path;</span><br><span class="line">  &#125;);</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+]]></content>
+      <categories>
+        <category>html5</category>
+      </categories>
+      <tags>
+        <tag>js</tag>
+        <tag>promise</tag>
+        <tag>异步</tag>
+        <tag>es6</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>...扩展运算符</title>
+    <url>/2018/03/21/%E6%89%A9%E5%B1%95%E8%BF%90%E7%AE%97%E7%AC%A6/</url>
+    <content><![CDATA[<h3 id="扩展运算符"><a href="#扩展运算符" class="headerlink" title="扩展运算符"></a>扩展运算符</h3><p>  扩展运算符（spread）是三个点（…）。它好比 rest 参数的逆运算，将一个数组转为用逗号分隔的参数序列。</p>
+<p>  该运算符主要用于函数调用。</p>
+<p>  扩展运算符后面还可以放置表达式。</p>
+  <figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">const</span> arr = [</span><br><span class="line">  ...(x &gt; <span class="number">0</span> ? [<span class="string">'a'</span>] : []),</span><br><span class="line">  <span class="string">'b'</span>,</span><br><span class="line">];</span><br></pre></td></tr></table></figure>
+
+<p>  如果扩展运算符后面是一个空数组，则不产生任何效果。</p>
+  <figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line">[...[], <span class="number">1</span>]</span><br><span class="line"><span class="comment">// [1]</span></span><br></pre></td></tr></table></figure>
+
+<p>  注意，只有函数调用时，扩展运算符才可以放在圆括号中，否则会报错。</p>
+  <figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line">(...[<span class="number">1</span>, <span class="number">2</span>])</span><br><span class="line"><span class="comment">// Uncaught SyntaxError: Unexpected number</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">console</span>.log((...[<span class="number">1</span>, <span class="number">2</span>]))</span><br><span class="line"><span class="comment">// Uncaught SyntaxError: Unexpected number</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">console</span>.log(...[<span class="number">1</span>, <span class="number">2</span>])</span><br><span class="line"><span class="comment">// 1 2</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="替代函数的-apply-方法"><a href="#替代函数的-apply-方法" class="headerlink" title="替代函数的 apply 方法"></a>替代函数的 apply 方法</h3><p>  由于扩展运算符可以展开数组，所以不再需要apply方法，将数组转为函数的参数了。</p>
+  <figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="comment">// ES5 的写法</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">f</span>(<span class="params">x, y, z</span>) </span>&#123;</span><br><span class="line">  <span class="comment">// ...</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">var</span> args = [<span class="number">0</span>, <span class="number">1</span>, <span class="number">2</span>];</span><br><span class="line">f.apply(<span class="literal">null</span>, args);</span><br><span class="line"></span><br><span class="line"><span class="comment">// ES6的写法</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">f</span>(<span class="params">x, y, z</span>) </span>&#123;</span><br><span class="line">  <span class="comment">// ...</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">let</span> args = [<span class="number">0</span>, <span class="number">1</span>, <span class="number">2</span>];</span><br><span class="line">f(...args);</span><br></pre></td></tr></table></figure>
+
+<p>  例子是通过push函数，将一个数组添加到另一个数组的尾部</p>
+  <figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="comment">// ES5的 写法</span></span><br><span class="line"><span class="keyword">var</span> arr1 = [<span class="number">0</span>, <span class="number">1</span>, <span class="number">2</span>];</span><br><span class="line"><span class="keyword">var</span> arr2 = [<span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>];</span><br><span class="line"><span class="built_in">Array</span>.prototype.push.apply(arr1, arr2);</span><br><span class="line"></span><br><span class="line"><span class="comment">// ES6 的写法</span></span><br><span class="line"><span class="keyword">let</span> arr1 = [<span class="number">0</span>, <span class="number">1</span>, <span class="number">2</span>];</span><br><span class="line"><span class="keyword">let</span> arr2 = [<span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>];</span><br><span class="line">arr1.push(...arr2);</span><br></pre></td></tr></table></figure>
+
+<p>  上面代码的 ES5 写法中，push方法的参数不能是数组，所以只好通过apply方法变通使用push方法。有了扩展运算符，就可以直接将数组传入push方法。</p>
+<p>  下面是另外一个例子。</p>
+  <figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="comment">// ES5</span></span><br><span class="line"><span class="keyword">new</span> (<span class="built_in">Date</span>.bind.apply(<span class="built_in">Date</span>, [<span class="literal">null</span>, <span class="number">2015</span>, <span class="number">1</span>, <span class="number">1</span>]))</span><br><span class="line"><span class="comment">// ES6</span></span><br><span class="line"><span class="keyword">new</span> <span class="built_in">Date</span>(...[<span class="number">2015</span>, <span class="number">1</span>, <span class="number">1</span>]);</span><br></pre></td></tr></table></figure>
+
+<h3 id="扩展运算符的应用"><a href="#扩展运算符的应用" class="headerlink" title="扩展运算符的应用"></a>扩展运算符的应用</h3><h5 id="复制数组"><a href="#复制数组" class="headerlink" title="复制数组"></a>复制数组</h5>  <figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">const</span> a1 = [<span class="number">1</span>, <span class="number">2</span>];</span><br><span class="line"><span class="comment">// 写法一</span></span><br><span class="line"><span class="keyword">const</span> a2 = [...a1];</span><br><span class="line"><span class="comment">// 写法二</span></span><br><span class="line"><span class="keyword">const</span> [...a2] = a1;</span><br></pre></td></tr></table></figure>
+
+<h5 id="合并数组"><a href="#合并数组" class="headerlink" title="合并数组"></a>合并数组</h5>  <figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">const</span> arr1 = [<span class="string">'a'</span>, <span class="string">'b'</span>];</span><br><span class="line"><span class="keyword">const</span> arr2 = [<span class="string">'c'</span>];</span><br><span class="line"><span class="keyword">const</span> arr3 = [<span class="string">'d'</span>, <span class="string">'e'</span>];</span><br><span class="line"></span><br><span class="line"><span class="comment">// ES5 的合并数组</span></span><br><span class="line">arr1.concat(arr2, arr3);</span><br><span class="line"><span class="comment">// [ 'a', 'b', 'c', 'd', 'e' ]</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// ES6 的合并数组</span></span><br><span class="line">[...arr1, ...arr2, ...arr3]</span><br><span class="line"><span class="comment">// [ 'a', 'b', 'c', 'd', 'e' ]</span></span><br></pre></td></tr></table></figure>
+
+<p>  不过，这两种方法都是浅拷贝，使用的时候需要注意。</p>
+<h5 id="与解构赋值结合"><a href="#与解构赋值结合" class="headerlink" title="与解构赋值结合"></a>与解构赋值结合</h5><p>  扩展运算符可以与解构赋值结合起来，用于生成数组。</p>
+  <figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="comment">// ES5</span></span><br><span class="line">a = list[<span class="number">0</span>], rest = list.slice(<span class="number">1</span>)</span><br><span class="line"><span class="comment">// ES6</span></span><br><span class="line">[a, ...rest] = list</span><br></pre></td></tr></table></figure>
+
+  <figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">const</span> [first, ...rest] = [<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>];</span><br><span class="line">first <span class="comment">// 1</span></span><br><span class="line">rest  <span class="comment">// [2, 3, 4, 5]</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> [first, ...rest] = [];</span><br><span class="line">first <span class="comment">// undefined</span></span><br><span class="line">rest  <span class="comment">// []</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> [first, ...rest] = [<span class="string">"foo"</span>];</span><br><span class="line">first  <span class="comment">// "foo"</span></span><br><span class="line">rest   <span class="comment">// []</span></span><br></pre></td></tr></table></figure>
+
+<p>  如果将扩展运算符用于数组赋值，只能放在参数的最后一位，否则会报错。</p>
+  <figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">const</span> [...butLast, last] = [<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>];</span><br><span class="line"><span class="comment">// 报错</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> [first, ...middle, last] = [<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>];</span><br><span class="line"><span class="comment">// 报错</span></span><br></pre></td></tr></table></figure>
+
+<h5 id="字符串"><a href="#字符串" class="headerlink" title="字符串"></a>字符串</h5><p>  扩展运算符还可以将字符串转为真正的数组。<br>  有一个重要的好处，那就是能够正确识别四个字节的 Unicode 字符。</p>
+  <figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line">[...<span class="string">'hello'</span>]</span><br><span class="line"><span class="comment">// [ "h", "e", "l", "l", "o" ]</span></span><br></pre></td></tr></table></figure>
+
+<h5 id="实现了-Iterator-接口的对象"><a href="#实现了-Iterator-接口的对象" class="headerlink" title="实现了 Iterator 接口的对象"></a>实现了 Iterator 接口的对象</h5><p>  任何定义了遍历器（Iterator）接口的对象，都可以用扩展运算符转为真正的数组。</p>
+  <figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">let</span> nodeList = <span class="built_in">document</span>.querySelectorAll(<span class="string">'div'</span>);</span><br><span class="line"><span class="keyword">let</span> array = [...nodeList];</span><br></pre></td></tr></table></figure>
+
+<p>  上面代码中，querySelectorAll方法返回的是一个NodeList对象。它不是数组，而是一个类似数组的对象。这时，扩展运算符可以将其转为真正的数组，原因就在于NodeList对象实现了 Iterator 。</p>
+<h5 id="Map-和-Set-结构，Generator-函数"><a href="#Map-和-Set-结构，Generator-函数" class="headerlink" title="Map 和 Set 结构，Generator 函数"></a>Map 和 Set 结构，Generator 函数</h5><p>  扩展运算符内部调用的是数据结构的 Iterator 接口，因此只要具有 Iterator 接口的对象，都可以使用扩展运算符，比如 Map 结构。</p>
+  <figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">let</span> map = <span class="keyword">new</span> <span class="built_in">Map</span>([</span><br><span class="line">  [<span class="number">1</span>, <span class="string">'one'</span>],</span><br><span class="line">  [<span class="number">2</span>, <span class="string">'two'</span>],</span><br><span class="line">  [<span class="number">3</span>, <span class="string">'three'</span>],</span><br><span class="line">]);</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> arr = [...map.keys()]; <span class="comment">// [1, 2, 3]</span></span><br></pre></td></tr></table></figure>
+
+<p>  Generator 函数运行后，返回一个遍历器对象，因此也可以使用扩展运算符。</p>
+  <figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">const</span> go = <span class="function"><span class="keyword">function</span>*(<span class="params"></span>)</span>&#123;</span><br><span class="line">  <span class="keyword">yield</span> <span class="number">1</span>;</span><br><span class="line">  <span class="keyword">yield</span> <span class="number">2</span>;</span><br><span class="line">  <span class="keyword">yield</span> <span class="number">3</span>;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">[...go()] <span class="comment">// [1, 2, 3]</span></span><br></pre></td></tr></table></figure>
+
+<p>  上面代码中，变量go是一个 Generator 函数，执行后返回的是一个遍历器对象，对这个遍历器对象执行扩展运算符，就会将内部遍历得到的值，转为一个数组。</p>
+<p>  如果对没有 Iterator 接口的对象，使用扩展运算符，将会报错。如:</p>
+  <figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">const</span> obj = &#123;<span class="attr">a</span>: <span class="number">1</span>, <span class="attr">b</span>: <span class="number">2</span>&#125;;</span><br><span class="line"><span class="keyword">let</span> arr = [...obj]; <span class="comment">// TypeError: Cannot spread non-iterable object</span></span><br></pre></td></tr></table></figure>]]></content>
+      <categories>
+        <category>html5</category>
+      </categories>
+      <tags>
+        <tag>js</tag>
+        <tag>es6</tag>
+        <tag>array</tag>
+        <tag>扩展运算符</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>初探Taro</title>
+    <url>/2021/04/14/%E5%88%9D%E6%8E%A2Taro/</url>
+    <content><![CDATA[<h1 id="Taro介绍"><a href="#Taro介绍" class="headerlink" title="Taro介绍"></a>Taro介绍</h1><figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">Taro 是个开放式跨端跨框架解决方案，如今端的形态多种多样，Web、React-Native、微信小程序、各大平台小程序等，如果针对不同的端去编写多套代码的成本显然非常高； </span><br><span class="line"></span><br><span class="line">此时使用 Taro，我们可以只书写一套代码，再通过 Taro 的编译工具，将源代码分别编译出可以在不同端（微信&#x2F;京东&#x2F;百度&#x2F;支付宝&#x2F;字节跳动&#x2F;QQ小程序、快应用、H5、React-Native 等）运行的代码。</span><br><span class="line"></span><br><span class="line">[官方UI框架](https:&#x2F;&#x2F;taro-ui.jd.com&#x2F;#&#x2F;)</span><br></pre></td></tr></table></figure>
+
+<h3 id="特性"><a href="#特性" class="headerlink" title="特性"></a>特性</h3><figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">Taro 目前支持React、Vue、Nerv三类框架，在未来 Taro 将开放拓展能力，使得开发者可以通过 Taro 拓展更多的框架支持。</span><br><span class="line">注意: Vue、Nerv是Taro3以上才支持。</span><br></pre></td></tr></table></figure>
+
+<h3 id="优点"><a href="#优点" class="headerlink" title="优点"></a>优点</h3><figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">1.掌握React、Vue、Nerv三类框架即可，学习成本低</span><br><span class="line"></span><br><span class="line">2.快速编写一套代码就能够适配到多端，降低开发成本</span><br><span class="line"></span><br><span class="line">3.支持现代前端开发流程。如：npm&#x2F;yarn 包管理工具、ES6+ 、CSS 预处理器和后处理器（Scss、Less、PostCSS）、支持组件化开发（解耦）、支持TypeScript语法开发</span><br></pre></td></tr></table></figure>
+
+<h1 id="快速开始"><a href="#快速开始" class="headerlink" title="快速开始"></a>快速开始</h1><h3 id="依赖环境"><a href="#依赖环境" class="headerlink" title="依赖环境"></a>依赖环境</h3><figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">1.请确保已具备较新的 node 环境（&gt;&#x3D;12.0.0）</span><br><span class="line"></span><br><span class="line">2.开发工具Vscode</span><br><span class="line"></span><br><span class="line">3.各平台对应的调试工具：如微信开发者工具等</span><br></pre></td></tr></table></figure>
+
+<h3 id="CLI工具安装"><a href="#CLI工具安装" class="headerlink" title="CLI工具安装"></a>CLI工具安装</h3><p>使用 npm 或者 yarn 全局安装 @tarojs/cli，或者直接使用 npx:</p>
+<p>(macOS系统前需要加sudo)</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line"># 使用 npm 安装 CLI</span><br><span class="line"></span><br><span class="line">$ npm install -g @tarojs&#x2F;cli</span><br><span class="line"></span><br><span class="line"># OR 使用 yarn 安装 CLI</span><br><span class="line"></span><br><span class="line">$ yarn global add @tarojs&#x2F;cli</span><br><span class="line"></span><br><span class="line"># OR 安装了 cnpm，使用 cnpm 安装 CLI</span><br><span class="line"></span><br><span class="line">$ cnpm install -g @tarojs&#x2F;cli</span><br></pre></td></tr></table></figure>
+
+<h3 id="创建项目"><a href="#创建项目" class="headerlink" title="创建项目"></a>创建项目</h3><p>已全局安装CLI,使用以下方式</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">1. taro init myApp</span><br></pre></td></tr></table></figure>
+
+<p>否则</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">2.npx @tarojs&#x2F;cli init myApp</span><br></pre></td></tr></table></figure>
+
+<h3 id="项目目录"><a href="#项目目录" class="headerlink" title="项目目录"></a>项目目录</h3><ul>
+<li><p>src</p>
+<ul>
+<li>api</li>
+<li>common</li>
+<li>components</li>
+<li>pages</li>
+<li>static</li>
+<li>app.config.js</li>
+<li>app.js</li>
+<li>index.html</li>
+</ul>
+</li>
+</ul>
+<h3 id="语法规范-基于react"><a href="#语法规范-基于react" class="headerlink" title="语法规范(基于react)"></a>语法规范(基于react)</h3><h4 id="常用组件"><a href="#常用组件" class="headerlink" title="常用组件"></a>常用组件</h4><ul>
+<li>View：视图组件</li>
+<li>ScrollView：客滚动视图</li>
+<li>Swiper：滑块视图容器</li>
+<li>Text：文本组件</li>
+<li>Button：按钮组件</li>
+<li>Input：输入框</li>
+<li>Picker：滚动选择器<br>…</li>
+</ul>
+<h4 id="SASS（CSS预编译处理器）"><a href="#SASS（CSS预编译处理器）" class="headerlink" title="SASS（CSS预编译处理器）"></a>SASS（CSS预编译处理器）</h4><p>Sass 在 CSS 语法的基础上增加了变量 (variables)、嵌套 (nested rules)、混合 (mixins)、导入 (inline imports) 等功能，这些拓展令 CSS 更加强大与优雅。使用 Sass有更好地组织管理样式文件，开发项目。<a href="https://www.sass.hk/docs/" target="_blank" rel="noopener">传送门</a>，</p>
+<h4 id="多环境配置"><a href="#多环境配置" class="headerlink" title="多环境配置"></a>多环境配置</h4><figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">yarn add cross-env</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><p>config</p>
+<ul>
+<li>dev.js （开发）</li>
+<li>release.js（预发布）</li>
+<li>prod.js（生产）</li>
+</ul>
+</li>
+</ul>
+<h4 id="发布生产环境"><a href="#发布生产环境" class="headerlink" title="发布生产环境"></a>发布生产环境</h4><ol>
+<li>h5 直接走大眼发布系统</li>
+<li>小程序需要借助开发者工具，绑定appID，上传代码至微信后台管理审核。</li>
+</ol>
+<h4 id="项目中可能会遇到的问题"><a href="#项目中可能会遇到的问题" class="headerlink" title="项目中可能会遇到的问题"></a>项目中可能会遇到的问题</h4><ol>
+<li>多平台的条件编译</li>
+</ol>
+<ul>
+<li>内置环境变量：process.env.TARO_ENV === ‘weapp’ 、 process.env.TARO_ENV === ‘h5’</li>
+<li>统一接口的多端文件： test.js 、test.h5.js、test.weapp.js </li>
+</ul>
+<ol start="2">
+<li>小程序包体积过大造成无法预览，无法上传的解决方案</li>
+</ol>
+<ul>
+<li>需要分包</li>
+<li>压缩图片，大图上传阿里云，采用cdn的方式引入</li>
+<li>如果主包的图片资源过多，可把图片打入对应的分包中</li>
+<li>接入的sdk，可通过分包中转页的形势接入，以免造成单个分包体积超过2M</li>
+</ul>
+]]></content>
+      <categories>
+        <category>小程序</category>
+      </categories>
+      <tags>
+        <tag>多端框架</tag>
+        <tag>react</tag>
+        <tag>小程序</tag>
+        <tag>taro</tag>
+      </tags>
+  </entry>
+</search>
